@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import type { Annotation, RelationDirection } from "../types";
 import RelationList from "./RelationList.vue";
 
-// Right column: inspector. Lists the current annotations (Regions / Relations),
-// lets the annotator select or delete a region. Linking comes later.
+// Right column: inspector. Lists the current annotations (regions) and lets the
+// annotator select, delete or link them.
 defineProps<{
   annotations: Annotation[];
   colors: Record<string, string>;
@@ -20,20 +19,13 @@ const emit = defineEmits<{
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
   "set-relation-labels": [from: number, to: number, labels: string[]];
 }>();
-
-const tab = ref<"regions" | "labels">("regions");
 </script>
 
 <template>
   <aside class="inspector">
-    <div class="tabs">
-      <button :class="{ active: tab === 'regions' }" @click="tab = 'regions'">
-        Regions {{ annotations.length }}
-      </button>
-      <button :class="{ active: tab === 'labels' }" @click="tab = 'labels'">Labels</button>
-    </div>
+    <h4 class="inspector__title">Regions ({{ annotations.length }})</h4>
 
-    <ul v-if="tab === 'regions'" class="regions">
+    <ul class="regions">
       <li
         v-for="(a, i) in annotations"
         :key="a.id"
@@ -65,8 +57,6 @@ const tab = ref<"regions" | "labels">("regions");
       Click a target region to link it.
     </p>
 
-    <div v-if="tab === 'labels'" class="labels-tab">Labels view — coming soon.</div>
-
     <RelationList
       :annotations="annotations"
       :colors="colors"
@@ -85,24 +75,9 @@ const tab = ref<"regions" | "labels">("regions");
   display: flex;
   flex-direction: column;
 }
-.tabs {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-}
-.tabs button {
-  flex: 1;
-  font: inherit;
-  cursor: pointer;
-  padding: 0.35rem;
-  border: 1px solid var(--lak-border);
-  background: transparent;
-  border-radius: 6px;
-}
-.tabs button.active {
-  background: var(--lak-accent);
-  color: #fff;
-  border-color: var(--lak-accent);
+.inspector__title {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
 }
 .regions {
   list-style: none;
@@ -169,8 +144,7 @@ const tab = ref<"regions" | "labels">("regions");
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.regions__empty,
-.labels-tab {
+.regions__empty {
   color: var(--lak-muted);
   font-size: 0.85rem;
 }
