@@ -12,6 +12,8 @@ const props = defineProps<{
   annotations: Annotation[];
   colors: Record<string, string>;
   selectedId: number | null;
+  /** True while a relation is being drawn — clicking a mark links it. */
+  linking?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -48,7 +50,7 @@ const onMouseUp = () => {
 </script>
 
 <template>
-  <section ref="root" class="document" @mouseup="onMouseUp">
+  <section ref="root" class="document" :class="{ 'is-linking': linking }" @mouseup="onMouseUp">
     <p class="document__text">
       <template v-for="(seg, i) in segments" :key="i">
         <mark
@@ -93,5 +95,8 @@ const onMouseUp = () => {
 .mark.is-selected {
   outline: 2px solid var(--mark-color);
   outline-offset: 1px;
+}
+.document.is-linking .mark {
+  cursor: crosshair;
 }
 </style>
