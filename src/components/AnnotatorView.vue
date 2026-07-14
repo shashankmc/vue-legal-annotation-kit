@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type {
   AnnotationDocument,
   Assignment,
@@ -12,6 +12,7 @@ import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
 import InspectorPane from "./InspectorPane.vue";
 import { useAnnotator } from "../model/useAnnotator";
+import { loadDraft, saveDraft } from "../model/localDraft";
 
 // The annotator's workspace. Annotators move through their assigned documents
 // in sequence (no free navigation); "next" means the current one is finished.
@@ -21,8 +22,6 @@ const props = defineProps<{
   assignment: Assignment;
   position: QueuePosition;
   guidelinesUrl?: string;
-  /** Set once the annotation layer reports unsaved edits. */
-  unsaved?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,6 +29,15 @@ const emit = defineEmits<{
   next: [assignment: Assignment];
   previous: [assignment: Assignment];
 }>();
+
+// A per-document local buffer: protects in-progress edits against a crash or
+// reload before the annotator has clicked Save/Next/Back at all — separate
+// from whatever the host's AnnotationSource does once that click happens.
+const draftKey = `lak:draft:${props.document.name}:${props.assignment.annotator}:${props.assignment.order}`;
+const existingDraft = loadDraft(draftKey);
+// A resumed draft is itself unsaved work, even before useAnnotator's own
+// dirty tracking sees any new edit.
+const resumedUnsaved = ref(existingDraft !== null);
 
 const {
   annotations,
@@ -46,7 +54,7 @@ const {
   removeRelation,
   setRelationDirection,
   setRelationLabels,
-} = useAnnotator(props.assignment.annotations);
+} = useAnnotator(existingDraft?.annotations ?? props.assignment.annotations);
 
 const selectedAnnotation = computed(
   () => annotations.value.find((a) => a.id === selectedId.value) ?? null,
@@ -69,7 +77,23 @@ const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
 
 // Document confidence is assignment-level.
-const documentConfidence = ref(props.assignment.confidence);
+const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
+
+// Buffer every edit locally so a crash/reload can resume from here.
+watch(
+  [annotations, documentConfidence],
+  () => saveDraft(draftKey, { annotations: annotations.value, confidence: documentConfidence.value }),
+  { deep: true },
+);
+
+// True whenever there's something not yet handed off to save/next/previous —
+// a resumed draft counts, as does any edit since (spans or confidence).
+const hasUnsavedChanges = computed(
+  () =>
+    resumedUnsaved.value ||
+    dirty.value ||
+    documentConfidence.value !== props.assignment.confidence,
+);
 
 // The assignment as it stands right now — the source of truth for
 // save/next/previous, since the live edits live in useAnnotator, not in props.
@@ -120,7 +144,7 @@ const onKey = (e: KeyboardEvent) => {
 
 // Remind the annotator that unsaved work will be lost when leaving the page.
 const warnIfUnsaved = (e: BeforeUnloadEvent) => {
-  if (props.unsaved || dirty.value) e.preventDefault();
+  if (hasUnsavedChanges.value) e.preventDefault();
 };
 onMounted(() => {
   window.addEventListener("beforeunload", warnIfUnsaved);
