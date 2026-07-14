@@ -54,6 +54,11 @@ export function useAnnotator(initial: Annotation[]) {
     selectedId.value = id;
   }
 
+  /** Clear the dirty flag once the current state has been handed off to save. */
+  function markSaved() {
+    dirty.value = false;
+  }
+
   /** Set the confidence rating (0–5) of one annotation. */
   function setConfidence(id: number, value: number) {
     const a = find(id);
@@ -115,6 +120,7 @@ export function useAnnotator(initial: Annotation[]) {
     createSpan,
     remove,
     select,
+    markSaved,
     setConfidence,
     startLinking,
     linkTo,
