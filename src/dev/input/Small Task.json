@@ -1,0 +1,177 @@
+{
+  "name": "Small Task",
+  "desc": "Description",
+  "labelset": {
+    "name": "All Attributes (Amm)",
+    "desc": "MaRBLe Annotations",
+    "labels": [
+      {
+        "name": "Postcondition",
+        "color": "#9fd1be"
+      },
+      {
+        "name": "Precondition",
+        "color": "#493b69"
+      },
+      {
+        "name": "Actors",
+        "color": "#71c345"
+      },
+      {
+        "name": "Acts",
+        "color": "#4435ba"
+      },
+      {
+        "name": "Legal Relations",
+        "color": "#9d68e2"
+      },
+      {
+        "name": "Geographical - Physical Domains",
+        "color": "#4d865d"
+      },
+      {
+        "name": "Temporal",
+        "color": "#434f65"
+      },
+      {
+        "name": "Explicit References",
+        "color": "#48dc7a"
+      },
+      {
+        "name": "Hierarchies",
+        "color": "#69a0b0"
+      },
+      {
+        "name": "Residual",
+        "color": "#b7bb37"
+      }
+    ]
+  },
+  "ann_guidelines": "http://www.examples.com",
+  "documents": [
+    {
+      "name": "10_A2_A3_provision_42 (2).txt",
+      "full_text": "The participation of Denmark in the adoption of measures constituting a development of the Schengen acquis, as well as the implementation of these measures and their application to Den-mark, shall be governed by the relevant provisions of the Protocol on the position of Denmark.\r\n",
+      "assignments": [
+        {
+          "annotator": 1,
+          "order": 1,
+          "status": "done",
+          "difficulty_rating": 5,
+          "annotations": [
+            {
+              "start": 0,
+              "end": 44,
+              "label": "Postcondition",
+              "text": "The participation of Denmark in the adoption",
+              "relations": [
+                {
+                  "to": 1,
+                  "direction": "right",
+                  "labels": [
+                    "Has a"
+                  ]
+                }
+              ],
+              "ls_id": "XRpUwh5JeV",
+              "confidence_rating": 2,
+              "html_metadata": null
+            },
+            {
+              "start": 209,
+              "end": 278,
+              "label": "Temporal",
+              "text": "by the relevant provisions of the Protocol on the position of Denmark",
+              "relations": [],
+              "ls_id": "QdmWw6nGXH",
+              "confidence_rating": 4,
+              "html_metadata": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10_A2_A3_provision_44 (2).txt",
+      "full_text": "Where the Court is of the opinion that the consideration of preparatory inquiries in cases before it so require, it shall, pursuant to Article 13 of the Statute, propose the appointment of Assistant Rapporteurs.\r\n",
+      "assignments": [
+        {
+          "annotator": 1,
+          "order": 2,
+          "status": "done",
+          "difficulty_rating": 0,
+          "annotations": [
+            {
+              "start": 57,
+              "end": 142,
+              "label": "Postcondition",
+              "text": "of preparatory inquiries in cases before it so require, it shall, pursuant to Article",
+              "relations": [],
+              "ls_id": "gZ3pzB24oM",
+              "confidence_rating": 0,
+              "html_metadata": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10_A2_A3_provision_77 (2).txt",
+      "full_text": "The highest courts and tribunals of a High Contracting Party, as specified in accordance with Article 10, may request the Court to give advisory opinions on questions of principle relating to the interpretation or application of the rights and freedoms defined in the Convention or the protocols thereto.\r\n",
+      "assignments": [
+        {
+          "annotator": 1,
+          "order": 3,
+          "status": "done",
+          "difficulty_rating": 0,
+          "annotations": [
+            {
+              "start": 230,
+              "end": 278,
+              "label": "Acts",
+              "text": "he rights and freedoms defined in the Convention",
+              "relations": [],
+              "ls_id": "wvUZ1rr0qH",
+              "confidence_rating": 0,
+              "html_metadata": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10_A2_A3_provision_80 (2).txt",
+      "full_text": "The instruments of ratification, acceptance or approval shall be deposited with the Secretary General of the Council of Europe.\r\n",
+      "assignments": [
+        {
+          "annotator": 2,
+          "order": 1,
+          "status": "pending",
+          "difficulty_rating": 0,
+          "annotations": []
+        }
+      ]
+    },
+    {
+      "name": "8_A1_A2_provision_80.txt",
+      "full_text": "For the purpose of paragraph 1, a contractual term or a practice which excludes compensation for recovery costs as referred to in Article 6 shall be presumed to be grossly unfair.\r\n",
+      "assignments": [
+        {
+          "annotator": 2,
+          "order": 2,
+          "status": "pending",
+          "difficulty_rating": 0,
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "documents": 5,
+    "assignments": 5,
+    "annotators": 2,
+    "annotations": 4,
+    "relations": 1
+  },
+  "annotation_level": "symbol"
+}
