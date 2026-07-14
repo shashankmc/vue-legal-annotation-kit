@@ -1,25 +1,17 @@
 import type { TaskData } from "../types";
-import type { AnnotationSource, AssignmentBundle } from "./source";
+import type { AnnotationSource } from "./source";
+import { flattenAssignments } from "./source";
 
 /**
  * An AnnotationSource backed entirely by an already-loaded task file — no
  * network calls. For a host that would rather fetch the whole task once and
  * let the annotator move through it locally, saving only updates the in-memory
  * copy; flushing it to a backend (once, or per-save) is the host's choice.
+ * Note: this keeps state in a JS closure only — a page refresh loses it. For a
+ * host with no backend at all, see createOfflineSource instead.
  */
 export function createBulkSource(task: TaskData, annotatorId: number): AnnotationSource {
-  const queue: AssignmentBundle[] = [];
-  for (const doc of task.documents) {
-    for (const assignment of doc.assignments) {
-      if (assignment.annotator === annotatorId) {
-        queue.push({
-          document: { name: doc.name, full_text: doc.full_text },
-          assignment,
-        });
-      }
-    }
-  }
-  queue.sort((a, b) => a.assignment.order - b.assignment.order);
+  const queue = flattenAssignments(task, annotatorId);
 
   return {
     total: queue.length,
