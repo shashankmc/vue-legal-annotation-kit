@@ -5,6 +5,28 @@ export type AnnotationLevel = "character" | "word" | "sentence" | "paragraph";
 
 export type RelationDirection = "bi" | "left" | "right";
 
+export type RelationLabel =
+  | "Is a"
+  | "Has a"
+  | "Belongs to"
+  | "Implies"
+  | "Depends on"
+  | "Related to"
+  | "Is not"
+  | "Part of";
+
+/** The relation labels offered in the UI (order matches the current tool). */
+export const RELATION_LABELS: RelationLabel[] = [
+  "Is a",
+  "Has a",
+  "Belongs to",
+  "Implies",
+  "Depends on",
+  "Related to",
+  "Is not",
+  "Part of",
+];
+
 export type AssignmentStatus = "pending" | "done" | (string & {});
 
 export interface Label {
