@@ -26,7 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ save: []; next: []; previous: [] }>();
 
-const { annotations, activeLabel, selectedId, dirty, createSpan, select } =
+const { annotations, activeLabel, selectedId, dirty, createSpan, remove, select } =
   useAnnotator(props.assignment.annotations);
 
 const onCreate = (payload: { start: number; end: number; text: string }) =>
@@ -96,6 +96,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved))
         :annotations="annotations"
         :selected-id="selectedId"
         @select="select"
+        @remove="remove"
       />
     </div>
   </div>
