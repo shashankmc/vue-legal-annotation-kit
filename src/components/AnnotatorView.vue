@@ -12,7 +12,7 @@ import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
 import InspectorPane from "./InspectorPane.vue";
 import { useAnnotator } from "../model/useAnnotator";
-import { loadDraft, saveDraft } from "../model/localDraft";
+import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 
 // The annotator's workspace. Annotators move through their assigned documents
 // in sequence (no free navigation); "next" means the current one is finished.
@@ -48,6 +48,7 @@ const {
   createSpan,
   remove,
   select,
+  markSaved,
   setConfidence,
   startLinking,
   linkTo,
@@ -109,6 +110,24 @@ const labelColors = computed(() =>
   Object.fromEntries(props.labelset.labels.map((l) => [l.name, l.color])),
 );
 
+// Save/Next/Back all hand the snapshot off to the host's AnnotationSource, so
+// the local crash-recovery buffer is no longer needed once any of them fires.
+const clearLocalState = () => {
+  clearDraft(draftKey);
+  markSaved();
+  resumedUnsaved.value = false;
+};
+
+const onSaveClick = () => {
+  clearLocalState();
+  emit("save", snapshot.value);
+};
+
+const onPrevious = () => {
+  clearLocalState();
+  emit("previous", snapshot.value);
+};
+
 const onNext = () => {
   // Advancing marks the document done — warn if nothing was annotated.
   if (
@@ -119,6 +138,7 @@ const onNext = () => {
   ) {
     return;
   }
+  clearLocalState();
   emit("next", snapshot.value);
 };
 
@@ -162,8 +182,8 @@ onBeforeUnmount(() => {
       :status="assignment.status"
       :position="position"
       :guidelines-url="guidelinesUrl"
-      @previous="$emit('previous', snapshot)"
-      @save="$emit('save', snapshot)"
+      @previous="onPrevious"
+      @save="onSaveClick"
       @next="onNext"
     />
 
