@@ -65,7 +65,7 @@ const tab = ref<"regions" | "labels">("regions");
       Click a target region to link it.
     </p>
 
-    <div v-else class="labels-tab">Labels view — coming soon.</div>
+    <div v-if="tab === 'labels'" class="labels-tab">Labels view — coming soon.</div>
 
     <RelationList
       :annotations="annotations"
