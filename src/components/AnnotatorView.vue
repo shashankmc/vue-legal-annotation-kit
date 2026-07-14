@@ -39,6 +39,10 @@ const annotationConfidence = ref(0);
 
 const hasAnnotations = computed(() => annotations.value.length > 0);
 
+const labelColors = computed(() =>
+  Object.fromEntries(props.labelset.labels.map((l) => [l.name, l.color])),
+);
+
 const onNext = () => {
   // Advancing marks the document done — warn if nothing was annotated.
   if (
@@ -80,7 +84,14 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved))
         v-model:annotation-confidence="annotationConfidence"
         @select="activeLabel = $event"
       />
-      <DocumentPane :text="document.full_text" @create="onCreate" />
+      <DocumentPane
+        :text="document.full_text"
+        :annotations="annotations"
+        :colors="labelColors"
+        :selected-id="selectedId"
+        @create="onCreate"
+        @select="select"
+      />
       <InspectorPane
         :annotations="annotations"
         :selected-id="selectedId"
