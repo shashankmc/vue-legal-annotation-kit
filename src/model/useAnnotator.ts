@@ -1,4 +1,4 @@
-import { ref, shallowRef, triggerRef } from "vue";
+import { ref } from "vue";
 import type { Annotation, Label } from "../types";
 import { isDuplicate, nextTempId } from "./spans";
 
@@ -8,15 +8,10 @@ import { isDuplicate, nextTempId } from "./spans";
  * selected. Rendering and DOM concerns live elsewhere.
  */
 export function useAnnotator(initial: Annotation[]) {
-  const annotations = shallowRef<Annotation[]>([...initial]);
+  const annotations = ref<Annotation[]>([...initial]);
   const activeLabel = ref<Label | null>(null);
   const selectedId = ref<number | null>(null);
   const dirty = ref(false);
-
-  const touch = () => {
-    triggerRef(annotations);
-    dirty.value = true;
-  };
 
   /** Create a span with the active label. Returns the new annotation, or null
    * if there is no active label or the exact range is already labelled. */
@@ -37,7 +32,7 @@ export function useAnnotator(initial: Annotation[]) {
     };
     annotations.value.push(annotation);
     selectedId.value = annotation.id;
-    touch();
+    dirty.value = true;
     return annotation;
   }
 
