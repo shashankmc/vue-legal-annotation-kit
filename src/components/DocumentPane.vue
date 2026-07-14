@@ -56,6 +56,7 @@ const onMouseUp = () => {
         <mark
           v-if="seg.annotationIds.length && primary(seg.annotationIds)"
           class="mark"
+          :data-ids="seg.annotationIds.join(',')"
           :class="{
             'is-selected': seg.annotationIds.includes(selectedId ?? NaN),
             'is-overlap': seg.annotationIds.length > 1,
