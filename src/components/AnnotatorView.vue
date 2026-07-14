@@ -79,6 +79,10 @@ const onActivate = (id: number) =>
 
 // Document confidence is assignment-level.
 const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
+// The confidence value as of the last save — NOT the same as props, which
+// stay frozen at mount and never refresh after a plain Save (only Next/Back
+// remount this component). Synced in clearLocalState.
+const savedConfidence = ref(props.assignment.confidence);
 
 // Buffer every edit locally so a crash/reload can resume from here.
 watch(
@@ -93,7 +97,7 @@ const hasUnsavedChanges = computed(
   () =>
     resumedUnsaved.value ||
     dirty.value ||
-    documentConfidence.value !== props.assignment.confidence,
+    documentConfidence.value !== savedConfidence.value,
 );
 
 // The assignment as it stands right now — the source of truth for
@@ -116,6 +120,7 @@ const clearLocalState = () => {
   clearDraft(draftKey);
   markSaved();
   resumedUnsaved.value = false;
+  savedConfidence.value = documentConfidence.value;
 };
 
 // Back/Next move away from this document — confirm first if there's anything
