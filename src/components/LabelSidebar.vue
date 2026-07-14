@@ -7,6 +7,7 @@ import StarRating from "./StarRating.vue";
 // Purely presentational for now — selecting a label does not annotate yet.
 const props = defineProps<{
   labels: Label[];
+  activeLabel: Label | null;
   documentConfidence: number;
   annotationConfidence: number;
   /** Annotation confidence only applies to a selected region. */
@@ -14,6 +15,7 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
+  select: [label: Label];
   "update:documentConfidence": [value: number];
   "update:annotationConfidence": [value: number];
 }>();
@@ -35,7 +37,13 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
     <input v-model="filter" class="sidebar__filter" type="text" placeholder="Quick Filter" />
 
     <ul class="labels">
-      <li v-for="(label, i) in visible" :key="label.name" class="label">
+      <li
+        v-for="(label, i) in visible"
+        :key="label.name"
+        class="label"
+        :class="{ 'is-active': label.name === activeLabel?.name }"
+        @click="$emit('select', label)"
+      >
         <span class="label__swatch" :style="{ background: label.color }" />
         <span class="label__name">{{ label.name }}</span>
         <span v-if="hotkey(i)" class="label__key">{{ hotkey(i) }}</span>
@@ -92,6 +100,14 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
 }
 .label:hover {
   background: rgba(0, 0, 0, 0.05);
+}
+.label.is-active {
+  background: var(--lak-accent);
+  color: #fff;
+}
+.label.is-active .label__key {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
 }
 .label__swatch {
   width: 0.85rem;
