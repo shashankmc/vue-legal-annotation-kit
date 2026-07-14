@@ -40,6 +40,7 @@ const onPrevious = async (assignment: Assignment) => {
 const onNext = async (assignment: Assignment) => {
   await save({ ...assignment, status: "done" });
   if (position.value >= total) {
+    await props.source.finish?.();
     emit("complete");
     return;
   }
