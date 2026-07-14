@@ -153,6 +153,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 ### `documents[].assignments[].annotations[]`
 | Field | Type | Notes |
 |---|---|---|
+| `id` | number | Stable unique annotation ID (assigned by our database). Relations reference it. |
 | `start` | number | Start offset into `full_text`. |
 | `end` | number | End offset (exclusive). |
 | `label` | string | Must match a `labelset` label name. |
@@ -164,7 +165,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
 |---|---|---|
-| `to` | number | **Index of the target annotation** within the same assignment's `annotations` array (0-based). |
+| `to` | number | **`id` of the target annotation** it relates to. |
 | `direction` | string | `left` \| `right` (relation arrow direction). |
 | `labels` | array of string | One or more relation labels (e.g. `["Has a"]`). |
 
@@ -175,15 +176,17 @@ Derived/denormalized summary — recompute rather than trust blindly:
 ### Minimal example
 ```json
 {
+  "id": 1,
   "start": 0,
   "end": 44,
   "label": "Postcondition",
   "text": "The participation of Denmark in the adoption",
-  "relations": [{ "to": 1, "direction": "right", "labels": ["Has a"] }],
+  "relations": [{ "to": 2, "direction": "right", "labels": ["Has a"] }],
   "confidence": 2,
   "html_metadata": null
 }
 ```
+_(`to: 2` points at the annotation whose `id` is `2`.)_
 
 ---
 
