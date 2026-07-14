@@ -10,6 +10,7 @@ import AnnotatorHeader from "./AnnotatorHeader.vue";
 import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
 import InspectorPane from "./InspectorPane.vue";
+import { useAnnotator } from "../model/useAnnotator";
 
 // The annotator's workspace. Annotators move through their assigned documents
 // in sequence (no free navigation); "next" means the current one is finished.
@@ -25,12 +26,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{ save: []; next: []; previous: [] }>();
 
+const { annotations, activeLabel, selectedId, dirty, select } = useAnnotator(
+  props.assignment.annotations,
+);
+
 // Local copies of the ratings so the template is interactive before the
-// annotation/model layer is wired in.
+// rating layer is wired in.
 const documentConfidence = ref(props.assignment.confidence);
 const annotationConfidence = ref(0);
 
-const hasAnnotations = computed(() => props.assignment.annotations.length > 0);
+const hasAnnotations = computed(() => annotations.value.length > 0);
 
 const onNext = () => {
   // Advancing marks the document done — warn if nothing was annotated.
@@ -47,7 +52,7 @@ const onNext = () => {
 
 // Remind the annotator that unsaved work will be lost when leaving the page.
 const warnIfUnsaved = (e: BeforeUnloadEvent) => {
-  if (props.unsaved) e.preventDefault();
+  if (props.unsaved || dirty.value) e.preventDefault();
 };
 onMounted(() => window.addEventListener("beforeunload", warnIfUnsaved));
 onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved));
@@ -67,11 +72,18 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved))
     <div class="lak-annotator__body">
       <LabelSidebar
         :labels="labelset.labels"
+        :active-label="activeLabel"
+        :has-selection="selectedId !== null"
         v-model:document-confidence="documentConfidence"
         v-model:annotation-confidence="annotationConfidence"
+        @select="activeLabel = $event"
       />
       <DocumentPane :text="document.full_text" />
-      <InspectorPane :annotations="assignment.annotations" />
+      <InspectorPane
+        :annotations="annotations"
+        :selected-id="selectedId"
+        @select="select"
+      />
     </div>
   </div>
 </template>
