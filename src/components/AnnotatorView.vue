@@ -26,9 +26,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{ save: []; next: []; previous: [] }>();
 
-const { annotations, activeLabel, selectedId, dirty, select } = useAnnotator(
-  props.assignment.annotations,
-);
+const { annotations, activeLabel, selectedId, dirty, createSpan, select } =
+  useAnnotator(props.assignment.annotations);
+
+const onCreate = (payload: { start: number; end: number; text: string }) =>
+  createSpan(payload.start, payload.end, payload.text);
 
 // Local copies of the ratings so the template is interactive before the
 // rating layer is wired in.
@@ -78,7 +80,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved))
         v-model:annotation-confidence="annotationConfidence"
         @select="activeLabel = $event"
       />
-      <DocumentPane :text="document.full_text" />
+      <DocumentPane :text="document.full_text" @create="onCreate" />
       <InspectorPane
         :annotations="annotations"
         :selected-id="selectedId"

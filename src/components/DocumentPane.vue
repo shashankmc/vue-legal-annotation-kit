@@ -1,11 +1,31 @@
 <script setup lang="ts">
-// Center column: the document text. No highlighting/selection logic yet —
-// this is where span rendering will live once the annotation layer exists.
-defineProps<{ text: string }>();
+import { ref } from "vue";
+import { selectionOffsets } from "../model/selection";
+
+// Center column: the document text. On mouse-up, a non-empty selection is
+// reported as character offsets; the parent decides whether to make a span.
+const props = defineProps<{ text: string }>();
+
+const emit = defineEmits<{
+  create: [payload: { start: number; end: number; text: string }];
+}>();
+
+const root = ref<HTMLElement>();
+
+const onMouseUp = () => {
+  if (!root.value) return;
+  const range = selectionOffsets(root.value);
+  if (!range) return;
+  emit("create", {
+    ...range,
+    text: props.text.slice(range.start, range.end),
+  });
+  window.getSelection()?.removeAllRanges();
+};
 </script>
 
 <template>
-  <section class="document">
+  <section ref="root" class="document" @mouseup="onMouseUp">
     <p class="document__text">{{ text }}</p>
   </section>
 </template>
