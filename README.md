@@ -67,8 +67,10 @@ The package must support everything the current tool does:
   (`confidence`; `0` means unrated). Shown in the UI as *Annotation Confidence*.
 
 ### Per-span metadata
-- A free-text **metadata string** attached to each span annotation
-  (`html_metadata`).
+- A free-text **metadata string** attached to each span annotation (`metadata`).
+- Separately, `html_metadata` holds HTML **offset positions** (`startOffset`,
+  `endOffset`, `globalOffsets`) — only relevant for HTML documents, not
+  user-facing text.
 
 ### Navigation & persistence
 - **Next / Back** to move between the documents assigned to the current annotator.
@@ -160,7 +162,8 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `text` | string | The selected substring (cached copy of `full_text[start:end]`). |
 | `relations` | array | Outgoing relations (below). |
 | `confidence` | number (0–5) | **Span-level confidence** stars; `0` = unrated. |
-| `html_metadata` | string \| null | Free-text per-span metadata. |
+| `metadata` | string \| null | Free-text per-span metadata (user-facing). |
+| `html_metadata` | object \| null | HTML offset positions (`start`, `end`, `startOffset`, `endOffset`, `globalOffsets`); HTML docs only. |
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
@@ -183,6 +186,7 @@ Derived/denormalized summary — recompute rather than trust blindly:
   "text": "The participation of Denmark in the adoption",
   "relations": [{ "to": 2, "direction": "right", "labels": ["Has a"] }],
   "confidence": 2,
+  "metadata": null,
   "html_metadata": null
 }
 ```
