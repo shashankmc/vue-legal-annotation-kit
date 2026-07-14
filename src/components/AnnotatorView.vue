@@ -36,12 +36,21 @@ const {
   createSpan,
   remove,
   select,
+  setConfidence,
   startLinking,
   linkTo,
   removeRelation,
   setRelationDirection,
   setRelationLabels,
 } = useAnnotator(props.assignment.annotations);
+
+const selectedAnnotation = computed(
+  () => annotations.value.find((a) => a.id === selectedId.value) ?? null,
+);
+
+const setAnnotationConfidence = (value: number) => {
+  if (selectedId.value !== null) setConfidence(selectedId.value, value);
+};
 
 const onCreate = (payload: { start: number; end: number; text: string }) =>
   createSpan(payload.start, payload.end, payload.text);
@@ -55,10 +64,8 @@ const setActiveLabel = (label: Label) => {
 const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
 
-// Local copies of the ratings so the template is interactive before the
-// rating layer is wired in.
+// Document confidence is assignment-level; kept local until save wiring lands.
 const documentConfidence = ref(props.assignment.confidence);
-const annotationConfidence = ref(0);
 
 const hasAnnotations = computed(() => annotations.value.length > 0);
 
@@ -129,9 +136,10 @@ onBeforeUnmount(() => {
         :labels="labelset.labels"
         :active-label="activeLabel"
         :has-selection="selectedId !== null"
+        :annotation-confidence="selectedAnnotation?.confidence ?? 0"
         v-model:document-confidence="documentConfidence"
-        v-model:annotation-confidence="annotationConfidence"
         @select="setActiveLabel"
+        @update:annotation-confidence="setAnnotationConfidence"
       />
       <DocumentPane
         :text="document.full_text"
