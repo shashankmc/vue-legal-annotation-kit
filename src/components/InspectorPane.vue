@@ -8,9 +8,14 @@ defineProps<{
   annotations: Annotation[];
   colors: Record<string, string>;
   selectedId: number | null;
+  linkingFrom: number | null;
 }>();
 
-const emit = defineEmits<{ select: [id: number]; remove: [id: number] }>();
+const emit = defineEmits<{
+  select: [id: number];
+  remove: [id: number];
+  link: [id: number];
+}>();
 
 const tab = ref<"regions" | "labels">("regions");
 
@@ -40,12 +45,24 @@ const relationCount = (anns: Annotation[]) =>
         <span class="region__swatch" :style="{ background: colors[a.label] }" />
         <span class="region__label">{{ a.label }}</span>
         <span class="region__text">{{ a.text }}</span>
-        <button class="region__del" title="Delete" @click.stop="emit('remove', a.id)">
+        <button
+          v-if="a.id === selectedId"
+          class="region__act"
+          title="Draw a relation from this region"
+          @click.stop="emit('link', a.id)"
+        >
+          🔗
+        </button>
+        <button class="region__act" title="Delete" @click.stop="emit('remove', a.id)">
           🗑
         </button>
       </li>
       <li v-if="!annotations.length" class="regions__empty">No annotations yet.</li>
     </ul>
+
+    <p v-if="linkingFrom !== null" class="linking-hint">
+      Click a target region to link it.
+    </p>
 
     <div v-else class="labels-tab">Labels view — coming soon.</div>
 
@@ -114,16 +131,26 @@ const relationCount = (anns: Annotation[]) =>
   border-color: var(--lak-accent);
   box-shadow: inset 0 0 0 1px var(--lak-accent);
 }
-.region__del {
-  margin-left: auto;
+.region__act {
   background: none;
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
   opacity: 0.6;
 }
-.region__del:hover {
+.region__act:first-of-type {
+  margin-left: auto;
+}
+.region__act:hover {
   opacity: 1;
+}
+.linking-hint {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  background: color-mix(in srgb, var(--lak-accent) 12%, transparent);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--lak-accent);
 }
 .region__index {
   color: var(--lak-muted);
