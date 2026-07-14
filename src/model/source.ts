@@ -1,4 +1,4 @@
-import type { Assignment, AnnotationDocument } from "../types";
+import type { Assignment, AnnotationDocument, TaskData } from "../types";
 
 export interface AssignmentBundle {
   document: AnnotationDocument;
@@ -19,4 +19,27 @@ export interface AnnotationSource {
   load(position: number): Promise<AssignmentBundle>;
   /** Persist the given assignment's annotations, confidence and status. */
   save(assignment: Assignment): Promise<void>;
+  /**
+   * Called once the annotator advances past the last document. Optional —
+   * sources that buffer locally (e.g. an offline cache) can use this to flush
+   * or clear their state; sources backed by a real save-per-document backend
+   * have nothing to do here and can omit it.
+   */
+  finish?(): Promise<void> | void;
+}
+
+/** Flatten a task file into one annotator's ordered queue of bundles. */
+export function flattenAssignments(task: TaskData, annotatorId: number): AssignmentBundle[] {
+  const bundles: AssignmentBundle[] = [];
+  for (const doc of task.documents) {
+    for (const assignment of doc.assignments) {
+      if (assignment.annotator === annotatorId) {
+        bundles.push({
+          document: { name: doc.name, full_text: doc.full_text },
+          assignment,
+        });
+      }
+    }
+  }
+  return bundles.sort((a, b) => a.assignment.order - b.assignment.order);
 }
