@@ -4,7 +4,11 @@ import type { Annotation } from "../types";
 
 // Right column: inspector. Lists the current annotations (Regions / Relations),
 // lets the annotator select or delete a region. Linking comes later.
-defineProps<{ annotations: Annotation[]; selectedId: number | null }>();
+defineProps<{
+  annotations: Annotation[];
+  colors: Record<string, string>;
+  selectedId: number | null;
+}>();
 
 const emit = defineEmits<{ select: [id: number]; remove: [id: number] }>();
 
@@ -29,9 +33,11 @@ const relationCount = (anns: Annotation[]) =>
         :key="a.id"
         class="region"
         :class="{ 'is-selected': a.id === selectedId }"
+        :style="{ '--region-color': colors[a.label] }"
         @click="emit('select', a.id)"
       >
         <span class="region__index">{{ i + 1 }}</span>
+        <span class="region__swatch" :style="{ background: colors[a.label] }" />
         <span class="region__label">{{ a.label }}</span>
         <span class="region__text">{{ a.text }}</span>
         <button class="region__del" title="Delete" @click.stop="emit('remove', a.id)">
@@ -86,13 +92,20 @@ const relationCount = (anns: Annotation[]) =>
 }
 .region {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.5rem;
   border: 1px solid var(--lak-border);
+  border-left: 4px solid var(--region-color, var(--lak-border));
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
+}
+.region__swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 .region:hover {
   background: rgba(0, 0, 0, 0.03);
