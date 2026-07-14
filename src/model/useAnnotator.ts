@@ -54,6 +54,15 @@ export function useAnnotator(initial: Annotation[]) {
     selectedId.value = id;
   }
 
+  /** Set the confidence rating (0–5) of one annotation. */
+  function setConfidence(id: number, value: number) {
+    const a = find(id);
+    if (a) {
+      a.confidence = value;
+      dirty.value = true;
+    }
+  }
+
   /** Begin drawing a relation from `id`. */
   function startLinking(id: number) {
     linkingFrom.value = id;
@@ -106,6 +115,7 @@ export function useAnnotator(initial: Annotation[]) {
     createSpan,
     remove,
     select,
+    setConfidence,
     startLinking,
     linkTo,
     removeRelation,
