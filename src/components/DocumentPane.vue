@@ -65,23 +65,25 @@ interface Arrow {
 
 const arrows = ref<Arrow[]>([]);
 
-// Top-centre anchor of an annotation, relative to the canvas — measured from
-// the union of its highlight rects so multi-segment spans still resolve.
+// Anchor point of an annotation, relative to the canvas: the centre-top of its
+// first line fragment. Using per-line rects (not the union bounding box) keeps
+// the anchor on the actual highlight when a span wraps across lines.
 const anchorOf = (id: number, canvasRect: DOMRect) => {
-  let left = Infinity,
-    right = -Infinity,
-    top = Infinity;
-  let found = false;
+  let best: DOMRect | null = null;
   textEl.value?.querySelectorAll<HTMLElement>(".mark").forEach((mark) => {
     if (!mark.dataset.ids?.split(",").includes(String(id))) return;
-    const r = mark.getBoundingClientRect();
-    found = true;
-    left = Math.min(left, r.left);
-    right = Math.max(right, r.right);
-    top = Math.min(top, r.top);
+    for (const r of mark.getClientRects()) {
+      // Topmost fragment; leftmost on ties — i.e. where the span begins.
+      if (!best || r.top < best.top || (r.top === best.top && r.left < best.left))
+        best = r;
+    }
   });
-  if (!found) return null;
-  return { cx: (left + right) / 2 - canvasRect.left, top: top - canvasRect.top };
+  if (!best) return null;
+  const r = best as DOMRect;
+  return {
+    cx: (r.left + r.right) / 2 - canvasRect.left,
+    top: r.top - canvasRect.top,
+  };
 };
 
 const redraw = () => {
