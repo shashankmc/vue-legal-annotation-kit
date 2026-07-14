@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type {
   AnnotationDocument,
   Assignment,
+  Label,
   Labelset,
   QueuePosition,
 } from "../types";
@@ -26,11 +27,33 @@ const props = defineProps<{
 
 const emit = defineEmits<{ save: []; next: []; previous: [] }>();
 
-const { annotations, activeLabel, selectedId, dirty, createSpan, remove, select } =
-  useAnnotator(props.assignment.annotations);
+const {
+  annotations,
+  activeLabel,
+  selectedId,
+  dirty,
+  linkingFrom,
+  createSpan,
+  remove,
+  select,
+  startLinking,
+  linkTo,
+  removeRelation,
+  setRelationDirection,
+  setRelationLabels,
+} = useAnnotator(props.assignment.annotations);
 
 const onCreate = (payload: { start: number; end: number; text: string }) =>
   createSpan(payload.start, payload.end, payload.text);
+
+const setActiveLabel = (label: Label) => {
+  activeLabel.value = label;
+};
+
+// A region click completes a relation when one is being drawn, otherwise it
+// just selects the region.
+const onActivate = (id: number) =>
+  linkingFrom.value !== null ? linkTo(id) : select(id);
 
 // Local copies of the ratings so the template is interactive before the
 // rating layer is wired in.
@@ -82,21 +105,28 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved))
         :has-selection="selectedId !== null"
         v-model:document-confidence="documentConfidence"
         v-model:annotation-confidence="annotationConfidence"
-        @select="activeLabel = $event"
+        @select="setActiveLabel"
       />
       <DocumentPane
         :text="document.full_text"
         :annotations="annotations"
         :colors="labelColors"
         :selected-id="selectedId"
+        :linking="linkingFrom !== null"
         @create="onCreate"
-        @select="select"
+        @select="onActivate"
       />
       <InspectorPane
         :annotations="annotations"
+        :colors="labelColors"
         :selected-id="selectedId"
-        @select="select"
+        :linking-from="linkingFrom"
+        @select="onActivate"
         @remove="remove"
+        @link="startLinking"
+        @remove-relation="removeRelation"
+        @set-relation-direction="setRelationDirection"
+        @set-relation-labels="setRelationLabels"
       />
     </div>
   </div>
