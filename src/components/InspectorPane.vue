@@ -23,7 +23,7 @@ const emit = defineEmits<{
 
 <template>
   <aside class="inspector">
-    <h4 class="inspector__title">Regions ({{ annotations.length }})</h4>
+    <h4 class="inspector__title">Annotations ({{ annotations.length }})</h4>
 
     <ul class="regions">
       <li
