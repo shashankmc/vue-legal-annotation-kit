@@ -118,17 +118,25 @@ const clearLocalState = () => {
   resumedUnsaved.value = false;
 };
 
+// Back/Next move away from this document — confirm first if there's anything
+// not yet handed off to a save (Save itself needs no such prompt).
+const confirmUnsavedChanges = () =>
+  !hasUnsavedChanges.value ||
+  window.confirm("You have unsaved changes in this document.\nAre you sure you want to continue?");
+
 const onSaveClick = () => {
   clearLocalState();
   emit("save", snapshot.value);
 };
 
 const onPrevious = () => {
+  if (!confirmUnsavedChanges()) return;
   clearLocalState();
   emit("previous", snapshot.value);
 };
 
 const onNext = () => {
+  if (!confirmUnsavedChanges()) return;
   // Advancing marks the document done — warn if nothing was annotated.
   if (
     !hasAnnotations.value &&
