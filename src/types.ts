@@ -81,3 +81,18 @@ export interface QueuePosition {
   /** Total documents assigned to this annotator for the task. */
   total: number;
 }
+
+/** A document as it appears in the raw task file, with its assignments. */
+export interface RawDocument extends AnnotationDocument {
+  assignments: Assignment[];
+}
+
+/** The shape of a whole exported task file (see README §4 Data format). */
+export interface TaskData {
+  name: string;
+  desc: string;
+  labelset: Labelset;
+  ann_guidelines: string;
+  documents: RawDocument[];
+  annotation_level: AnnotationLevel;
+}
