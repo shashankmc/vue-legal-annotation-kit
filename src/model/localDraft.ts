@@ -9,7 +9,7 @@ export interface DocumentDraft {
  * A localStorage-backed buffer for the CURRENT document's in-progress edits —
  * protects against a crash or reload before the annotator has clicked
  * Save/Next/Back at all. Scoped to one document at a time, unlike the
- * queue-wide cache in offlineSource.ts.
+ * queue-wide cache in bulkSource.ts.
  */
 export function loadDraft(key: string): DocumentDraft | null {
   const raw = localStorage.getItem(key);

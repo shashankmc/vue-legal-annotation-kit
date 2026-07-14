@@ -6,4 +6,3 @@ export * from "./types";
 export * from "./model/source";
 export { useAssignmentQueue } from "./model/useAssignmentQueue";
 export { createBulkSource } from "./model/bulkSource";
-export { createOfflineSource } from "./model/offlineSource";
