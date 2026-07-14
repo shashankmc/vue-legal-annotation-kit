@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import type { Annotation } from "../types";
+import type { Annotation, RelationDirection } from "../types";
+import RelationList from "./RelationList.vue";
 
 // Right column: inspector. Lists the current annotations (Regions / Relations),
 // lets the annotator select or delete a region. Linking comes later.
@@ -15,12 +16,12 @@ const emit = defineEmits<{
   select: [id: number];
   remove: [id: number];
   link: [id: number];
+  "remove-relation": [from: number, to: number];
+  "set-relation-direction": [from: number, to: number, direction: RelationDirection];
+  "set-relation-labels": [from: number, to: number, labels: string[]];
 }>();
 
 const tab = ref<"regions" | "labels">("regions");
-
-const relationCount = (anns: Annotation[]) =>
-  anns.reduce((sum, a) => sum + a.relations.length, 0);
 </script>
 
 <template>
@@ -66,9 +67,13 @@ const relationCount = (anns: Annotation[]) =>
 
     <div v-else class="labels-tab">Labels view — coming soon.</div>
 
-    <div class="relations">
-      <h4 class="relations__title">Relations ({{ relationCount(annotations) }})</h4>
-    </div>
+    <RelationList
+      :annotations="annotations"
+      :colors="colors"
+      @remove="(from, to) => emit('remove-relation', from, to)"
+      @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
+      @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"
+    />
   </aside>
 </template>
 
@@ -168,14 +173,5 @@ const relationCount = (anns: Annotation[]) =>
 .labels-tab {
   color: var(--lak-muted);
   font-size: 0.85rem;
-}
-.relations {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--lak-border);
-}
-.relations__title {
-  margin: 0;
-  font-size: 0.9rem;
 }
 </style>
