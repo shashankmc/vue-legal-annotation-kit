@@ -25,7 +25,11 @@ const props = defineProps<{
   unsaved?: boolean;
 }>();
 
-const emit = defineEmits<{ save: []; next: []; previous: [] }>();
+const emit = defineEmits<{
+  save: [assignment: Assignment];
+  next: [assignment: Assignment];
+  previous: [assignment: Assignment];
+}>();
 
 const {
   annotations,
@@ -64,8 +68,16 @@ const setActiveLabel = (label: Label) => {
 const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
 
-// Document confidence is assignment-level; kept local until save wiring lands.
+// Document confidence is assignment-level.
 const documentConfidence = ref(props.assignment.confidence);
+
+// The assignment as it stands right now — the source of truth for
+// save/next/previous, since the live edits live in useAnnotator, not in props.
+const snapshot = computed<Assignment>(() => ({
+  ...props.assignment,
+  annotations: annotations.value,
+  confidence: documentConfidence.value,
+}));
 
 const hasAnnotations = computed(() => annotations.value.length > 0);
 
@@ -83,7 +95,7 @@ const onNext = () => {
   ) {
     return;
   }
-  emit("next");
+  emit("next", snapshot.value);
 };
 
 // Number keys arm a label: 1–9 for the first nine, 0 for the tenth.
@@ -126,8 +138,8 @@ onBeforeUnmount(() => {
       :status="assignment.status"
       :position="position"
       :guidelines-url="guidelinesUrl"
-      @previous="$emit('previous')"
-      @save="$emit('save')"
+      @previous="$emit('previous', snapshot)"
+      @save="$emit('save', snapshot)"
       @next="onNext"
     />
 
