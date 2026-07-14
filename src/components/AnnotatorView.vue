@@ -79,12 +79,38 @@ const onNext = () => {
   emit("next");
 };
 
+// Number keys arm a label: 1–9 for the first nine, 0 for the tenth.
+const onKey = (e: KeyboardEvent) => {
+  const el = e.target as HTMLElement | null;
+  if (
+    e.ctrlKey ||
+    e.metaKey ||
+    e.altKey ||
+    el?.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName ?? "")
+  )
+    return;
+  if (!/^[0-9]$/.test(e.key)) return;
+  const index = e.key === "0" ? 9 : Number(e.key) - 1;
+  const label = props.labelset.labels[index];
+  if (label) {
+    activeLabel.value = label;
+    e.preventDefault();
+  }
+};
+
 // Remind the annotator that unsaved work will be lost when leaving the page.
 const warnIfUnsaved = (e: BeforeUnloadEvent) => {
   if (props.unsaved || dirty.value) e.preventDefault();
 };
-onMounted(() => window.addEventListener("beforeunload", warnIfUnsaved));
-onBeforeUnmount(() => window.removeEventListener("beforeunload", warnIfUnsaved));
+onMounted(() => {
+  window.addEventListener("beforeunload", warnIfUnsaved);
+  window.addEventListener("keydown", onKey);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("beforeunload", warnIfUnsaved);
+  window.removeEventListener("keydown", onKey);
+});
 </script>
 
 <template>
