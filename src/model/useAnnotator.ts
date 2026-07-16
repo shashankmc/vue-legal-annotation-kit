@@ -12,6 +12,7 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
   const documentAnnotations = ref<DocumentAnnotation[]>([...initialDocumentAnnotations]);
   const activeLabel = ref<Label | null>(null);
   const selectedId = ref<number | null>(null);
+  const selectedDocumentAnnotationId = ref<number | null>(null);
   const dirty = ref(false);
   /** Source annotation while the user is drawing a relation, else null. */
   const linkingFrom = ref<number | null>(null);
@@ -48,6 +49,7 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     const existing = documentAnnotations.value.find((d) => d.label === label.name);
     if (existing) {
       documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== existing.id);
+      if (selectedDocumentAnnotationId.value === existing.id) selectedDocumentAnnotationId.value = null;
     } else {
       documentAnnotations.value.push({
         id: nextTempId(documentAnnotations.value),
@@ -60,7 +62,12 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
 
   function removeDocumentAnnotation(id: number) {
     documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== id);
+    if (selectedDocumentAnnotationId.value === id) selectedDocumentAnnotationId.value = null;
     dirty.value = true;
+  }
+
+  function selectDocumentAnnotation(id: number | null) {
+    selectedDocumentAnnotationId.value = id;
   }
 
   /** Set the confidence rating (0–5) of one document-level tag. */
@@ -148,6 +155,7 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     documentAnnotations,
     activeLabel,
     selectedId,
+    selectedDocumentAnnotationId,
     dirty,
     linkingFrom,
     createSpan,
@@ -163,5 +171,6 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     toggleDocumentLabel,
     removeDocumentAnnotation,
     setDocumentAnnotationConfidence,
+    selectDocumentAnnotation,
   };
 }
