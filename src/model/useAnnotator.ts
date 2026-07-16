@@ -51,11 +51,13 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
       documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== existing.id);
       if (selectedDocumentAnnotationId.value === existing.id) selectedDocumentAnnotationId.value = null;
     } else {
-      documentAnnotations.value.push({
+      const tag: DocumentAnnotation = {
         id: nextTempId(documentAnnotations.value),
         label: label.name,
         confidence: 0,
-      });
+      };
+      documentAnnotations.value.push(tag);
+      selectedDocumentAnnotationId.value = tag.id;
     }
     dirty.value = true;
   }
