@@ -171,6 +171,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 |---|---|---|
 | `id` | number | Stable unique document-annotation ID (assigned by our database). |
 | `label` | string | Must match a `labelset` label name. No `start`/`end`/`text` — it tags the whole document, not a span. At most one entry per label; toggled on/off in the UI. |
+| `confidence` | number (0–5) | **Per-tag confidence** stars; `0` = unrated. Distinct from the assignment-level `confidence` above, which rates the document as a whole. |
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
