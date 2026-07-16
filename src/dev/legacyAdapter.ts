@@ -68,6 +68,8 @@ function toAssignment(legacy: LegacyAssignment): Assignment {
     status: legacy.status,
     confidence: legacy.difficulty_rating,
     annotations: toAnnotations(legacy.annotations),
+    // The legacy export predates document-level annotations.
+    document_annotations: [],
   };
 }
 
