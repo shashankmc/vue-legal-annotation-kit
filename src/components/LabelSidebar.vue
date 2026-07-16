@@ -13,7 +13,7 @@ const props = defineProps<{
   documentConfidence: number;
   annotationConfidence: number;
   documentAnnotations: DocumentAnnotation[];
-  /** Annotation confidence only applies to a selected region. */
+  /** Confidence only applies once a span or document tag is selected. */
   hasSelection?: boolean;
 }>();
 
@@ -75,8 +75,7 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
 
     <div class="sidebar__confidence">
       <StarRating
-        v-if="!documentLevel"
-        label="Annotation Confidence"
+        :label="documentLevel ? 'Tag Confidence' : 'Annotation Confidence'"
         :model-value="annotationConfidence"
         :disabled="!hasSelection"
         @update:model-value="$emit('update:annotationConfidence', $event)"

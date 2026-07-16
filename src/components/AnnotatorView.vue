@@ -51,6 +51,7 @@ const {
   documentAnnotations,
   activeLabel,
   selectedId,
+  selectedDocumentAnnotationId,
   dirty,
   linkingFrom,
   createSpan,
@@ -66,6 +67,7 @@ const {
   toggleDocumentLabel,
   removeDocumentAnnotation,
   setDocumentAnnotationConfidence,
+  selectDocumentAnnotation,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
   existingDraft?.documentAnnotations ?? props.assignment.document_annotations,
@@ -75,8 +77,25 @@ const selectedAnnotation = computed(
   () => annotations.value.find((a) => a.id === selectedId.value) ?? null,
 );
 
-const setAnnotationConfidence = (value: number) => {
-  if (selectedId.value !== null) setConfidence(selectedId.value, value);
+const selectedDocumentAnnotation = computed(
+  () => documentAnnotations.value.find((d) => d.id === selectedDocumentAnnotationId.value) ?? null,
+);
+
+// The sidebar's single "Annotation Confidence" widget rates whichever kind of
+// annotation this task's mode selects — a span, or a document tag.
+const hasSelection = computed(() =>
+  isDocumentLevel.value ? selectedDocumentAnnotationId.value !== null : selectedId.value !== null,
+);
+const selectionConfidence = computed(() =>
+  isDocumentLevel.value ? (selectedDocumentAnnotation.value?.confidence ?? 0) : (selectedAnnotation.value?.confidence ?? 0),
+);
+const setSelectionConfidence = (value: number) => {
+  if (isDocumentLevel.value) {
+    if (selectedDocumentAnnotationId.value !== null)
+      setDocumentAnnotationConfidence(selectedDocumentAnnotationId.value, value);
+  } else if (selectedId.value !== null) {
+    setConfidence(selectedId.value, value);
+  }
 };
 
 const onCreate = (payload: { start: number; end: number; text: string }) =>
@@ -229,12 +248,12 @@ onBeforeUnmount(() => {
         :labels="labelset.labels"
         :document-level="isDocumentLevel"
         :active-label="activeLabel"
-        :has-selection="selectedId !== null"
-        :annotation-confidence="selectedAnnotation?.confidence ?? 0"
+        :has-selection="hasSelection"
+        :annotation-confidence="selectionConfidence"
         :document-annotations="documentAnnotations"
         v-model:document-confidence="documentConfidence"
         @select="setActiveLabel"
-        @update:annotation-confidence="setAnnotationConfidence"
+        @update:annotation-confidence="setSelectionConfidence"
         @toggle-document-label="toggleDocumentLabel"
       />
       <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
@@ -254,11 +273,12 @@ onBeforeUnmount(() => {
         :document-annotations="documentAnnotations"
         :colors="labelColors"
         :selected-id="selectedId"
+        :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
         @select="onActivate"
         @remove="remove"
+        @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
-        @set-document-annotation-confidence="setDocumentAnnotationConfidence"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"

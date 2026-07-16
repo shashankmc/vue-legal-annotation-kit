@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Annotation, DocumentAnnotation, RelationDirection } from "../types";
 import RelationList from "./RelationList.vue";
-import StarRating from "./StarRating.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
 // annotator select, delete or link them.
@@ -11,14 +10,15 @@ defineProps<{
   documentAnnotations: DocumentAnnotation[];
   colors: Record<string, string>;
   selectedId: number | null;
+  selectedDocumentAnnotationId: number | null;
   linkingFrom: number | null;
 }>();
 
 const emit = defineEmits<{
   select: [id: number];
   remove: [id: number];
+  "select-document-annotation": [id: number];
   "remove-document-annotation": [id: number];
-  "set-document-annotation-confidence": [id: number, value: number];
   link: [id: number];
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
@@ -35,15 +35,12 @@ const emit = defineEmits<{
           v-for="d in documentAnnotations"
           :key="d.id"
           class="region"
+          :class="{ 'is-selected': d.id === selectedDocumentAnnotationId }"
           :style="{ '--region-color': colors[d.label] }"
+          @click="emit('select-document-annotation', d.id)"
         >
           <span class="region__swatch" :style="{ background: colors[d.label] }" />
           <span class="region__label">{{ d.label }}</span>
-          <StarRating
-            class="region__confidence"
-            :model-value="d.confidence"
-            @update:model-value="emit('set-document-annotation-confidence', d.id, $event)"
-          />
           <button
             class="region__act"
             title="Remove"
@@ -155,12 +152,6 @@ const emit = defineEmits<{
 }
 .region__act:first-of-type {
   margin-left: auto;
-}
-.region__confidence {
-  margin-left: auto;
-}
-.region__confidence :deep(.rating__star) {
-  font-size: 0.95rem;
 }
 .region__act:hover {
   opacity: 1;
