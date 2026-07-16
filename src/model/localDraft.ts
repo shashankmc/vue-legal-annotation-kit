@@ -1,7 +1,8 @@
-import type { Annotation } from "../types";
+import type { Annotation, DocumentAnnotation } from "../types";
 
 export interface DocumentDraft {
   annotations: Annotation[];
+  documentAnnotations: DocumentAnnotation[];
   confidence: number;
 }
 
