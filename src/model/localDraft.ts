@@ -1,8 +1,9 @@
-import type { Annotation, DocumentAnnotation } from "../types";
+import type { Annotation, DocumentAnnotation, DocumentRelation } from "../types";
 
 export interface DocumentDraft {
   annotations: Annotation[];
   documentAnnotations: DocumentAnnotation[];
+  documentRelations: DocumentRelation[];
   confidence: number;
 }
 

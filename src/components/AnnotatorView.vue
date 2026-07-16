@@ -8,6 +8,7 @@ import type {
   Labelset,
   QueuePosition,
 } from "../types";
+import type { DocumentRef } from "../model/source";
 import AnnotatorHeader from "./AnnotatorHeader.vue";
 import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
@@ -25,6 +26,8 @@ const props = defineProps<{
   annotationLevel: AnnotationLevel;
   assignment: Assignment;
   position: QueuePosition;
+  /** Other queue documents this one can point at (document-relation targets). */
+  otherDocuments?: DocumentRef[];
   guidelinesUrl?: string;
 }>();
 
@@ -69,9 +72,15 @@ const {
   removeDocumentAnnotation,
   setDocumentAnnotationConfidence,
   selectDocumentAnnotation,
+  documentRelations,
+  addDocumentRelation,
+  removeDocumentRelation,
+  setDocumentRelationDirection,
+  setDocumentRelationLabels,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
   existingDraft?.documentAnnotations ?? props.assignment.document_annotations,
+  existingDraft?.documentRelations ?? props.assignment.document_relations,
 );
 
 const selectedAnnotation = computed(
@@ -125,11 +134,12 @@ const savedConfidence = ref(props.assignment.confidence);
 
 // Buffer every edit locally so a crash/reload can resume from here.
 watch(
-  [annotations, documentAnnotations, documentConfidence],
+  [annotations, documentAnnotations, documentRelations, documentConfidence],
   () =>
     saveDraft(draftKey, {
       annotations: annotations.value,
       documentAnnotations: documentAnnotations.value,
+      documentRelations: documentRelations.value,
       confidence: documentConfidence.value,
     }),
   { deep: true },
@@ -150,11 +160,15 @@ const snapshot = computed<Assignment>(() => ({
   ...props.assignment,
   annotations: annotations.value,
   document_annotations: documentAnnotations.value,
+  document_relations: documentRelations.value,
   confidence: documentConfidence.value,
 }));
 
 const hasAnnotations = computed(
-  () => annotations.value.length > 0 || documentAnnotations.value.length > 0,
+  () =>
+    annotations.value.length > 0 ||
+    documentAnnotations.value.length > 0 ||
+    documentRelations.value.length > 0,
 );
 
 const labelColors = computed(() =>
@@ -278,6 +292,8 @@ onBeforeUnmount(() => {
         :document-level="isDocumentLevel"
         :annotations="annotations"
         :document-annotations="documentAnnotations"
+        :document-relations="documentRelations"
+        :other-documents="otherDocuments ?? []"
         :colors="labelColors"
         :selected-id="selectedId"
         :selected-document-annotation-id="selectedDocumentAnnotationId"
@@ -286,6 +302,10 @@ onBeforeUnmount(() => {
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
+        @add-document-relation="addDocumentRelation"
+        @remove-document-relation="removeDocumentRelation"
+        @set-document-relation-direction="setDocumentRelationDirection"
+        @set-document-relation-labels="setDocumentRelationLabels"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"

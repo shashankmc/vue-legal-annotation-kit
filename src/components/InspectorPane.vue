@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import type { Annotation, DocumentAnnotation, RelationDirection } from "../types";
+import type {
+  Annotation,
+  DocumentAnnotation,
+  DocumentRelation,
+  RelationDirection,
+} from "../types";
+import type { DocumentRef } from "../model/source";
 import RelationList from "./RelationList.vue";
+import DocumentRelationList from "./DocumentRelationList.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
 // annotator select, delete or link them.
@@ -8,6 +15,8 @@ defineProps<{
   documentLevel: boolean;
   annotations: Annotation[];
   documentAnnotations: DocumentAnnotation[];
+  documentRelations: DocumentRelation[];
+  otherDocuments: DocumentRef[];
   colors: Record<string, string>;
   selectedId: number | null;
   selectedDocumentAnnotationId: number | null;
@@ -19,6 +28,10 @@ const emit = defineEmits<{
   remove: [id: number];
   "select-document-annotation": [id: number];
   "remove-document-annotation": [id: number];
+  "add-document-relation": [toName: string];
+  "remove-document-relation": [toName: string];
+  "set-document-relation-direction": [toName: string, direction: RelationDirection];
+  "set-document-relation-labels": [toName: string, labels: string[]];
   link: [id: number];
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
@@ -51,6 +64,16 @@ const emit = defineEmits<{
         </li>
         <li v-if="!documentAnnotations.length" class="regions__empty">No document tags yet.</li>
       </ul>
+
+      <DocumentRelationList
+        v-if="otherDocuments.length || documentRelations.length"
+        :relations="documentRelations"
+        :other-documents="otherDocuments"
+        @add="emit('add-document-relation', $event)"
+        @remove="emit('remove-document-relation', $event)"
+        @set-direction="(to, dir) => emit('set-document-relation-direction', to, dir)"
+        @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
+      />
     </template>
 
     <template v-else>

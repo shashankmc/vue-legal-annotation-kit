@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
-import type { AnnotationSource } from "../model/source";
+import { computed, onMounted, ref } from "vue";
+import type { AnnotationSource, DocumentRef } from "../model/source";
 import type { AnnotationLevel, Assignment, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
@@ -26,9 +26,23 @@ const { position, total, bundle, loading, error, goTo, save } = useAssignmentQue
   props.startPosition ?? 1,
 );
 
-onMounted(() => goTo(position.value));
+// The queue's document names, for the document-relation target picker. Fetched
+// once — names/order are stable for the session. Left empty if the source
+// doesn't implement listDocuments (the relations UI then stays hidden).
+const docRefs = ref<DocumentRef[]>([]);
+
+onMounted(async () => {
+  docRefs.value = (await props.source.listDocuments?.()) ?? [];
+  await goTo(position.value);
+});
 
 const queuePosition = computed(() => ({ current: position.value, total }));
+
+// Every queue document except the one currently open — the valid targets a
+// document can point at.
+const otherDocuments = computed(() =>
+  docRefs.value.filter((d) => d.name !== bundle.value?.document.name),
+);
 
 const onSave = (assignment: Assignment) => save(assignment);
 
@@ -57,6 +71,7 @@ const onNext = async (assignment: Assignment) => {
     :assignment="bundle.assignment"
     :labelset="labelset"
     :annotation-level="annotationLevel"
+    :other-documents="otherDocuments"
     :position="queuePosition"
     :guidelines-url="guidelinesUrl"
     @save="onSave"
