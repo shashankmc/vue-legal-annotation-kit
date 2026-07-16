@@ -65,6 +65,7 @@ const {
   setRelationLabels,
   toggleDocumentLabel,
   removeDocumentAnnotation,
+  setDocumentAnnotationConfidence,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
   existingDraft?.documentAnnotations ?? props.assignment.document_annotations,
@@ -257,6 +258,7 @@ onBeforeUnmount(() => {
         @select="onActivate"
         @remove="remove"
         @remove-document-annotation="removeDocumentAnnotation"
+        @set-document-annotation-confidence="setDocumentAnnotationConfidence"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"

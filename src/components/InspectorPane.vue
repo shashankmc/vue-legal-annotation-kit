@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Annotation, DocumentAnnotation, RelationDirection } from "../types";
 import RelationList from "./RelationList.vue";
+import StarRating from "./StarRating.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
 // annotator select, delete or link them.
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   select: [id: number];
   remove: [id: number];
   "remove-document-annotation": [id: number];
+  "set-document-annotation-confidence": [id: number, value: number];
   link: [id: number];
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
@@ -37,6 +39,11 @@ const emit = defineEmits<{
         >
           <span class="region__swatch" :style="{ background: colors[d.label] }" />
           <span class="region__label">{{ d.label }}</span>
+          <StarRating
+            class="region__confidence"
+            :model-value="d.confidence"
+            @update:model-value="emit('set-document-annotation-confidence', d.id, $event)"
+          />
           <button
             class="region__act"
             title="Remove"
@@ -148,6 +155,12 @@ const emit = defineEmits<{
 }
 .region__act:first-of-type {
   margin-left: auto;
+}
+.region__confidence {
+  margin-left: auto;
+}
+.region__confidence :deep(.rating__star) {
+  font-size: 0.95rem;
 }
 .region__act:hover {
   opacity: 1;
