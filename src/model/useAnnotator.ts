@@ -52,6 +52,7 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
       documentAnnotations.value.push({
         id: nextTempId(documentAnnotations.value),
         label: label.name,
+        confidence: 0,
       });
     }
     dirty.value = true;
@@ -60,6 +61,15 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
   function removeDocumentAnnotation(id: number) {
     documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== id);
     dirty.value = true;
+  }
+
+  /** Set the confidence rating (0–5) of one document-level tag. */
+  function setDocumentAnnotationConfidence(id: number, value: number) {
+    const d = documentAnnotations.value.find((d) => d.id === id);
+    if (d) {
+      d.confidence = value;
+      dirty.value = true;
+    }
   }
 
   function remove(id: number) {
@@ -152,5 +162,6 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     setRelationLabels,
     toggleDocumentLabel,
     removeDocumentAnnotation,
+    setDocumentAnnotationConfidence,
   };
 }
