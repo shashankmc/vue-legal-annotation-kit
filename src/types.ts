@@ -67,6 +67,8 @@ export interface DocumentAnnotation {
   id: number;
   /** Must match a `labelset` label name. */
   label: string;
+  /** 0–5 stars; 0 = unrated. */
+  confidence: number;
 }
 
 export interface Assignment {
