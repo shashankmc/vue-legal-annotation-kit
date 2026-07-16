@@ -1,6 +1,7 @@
 // Pure span helpers — no Vue, no DOM. Everything here is a plain function of
 // its inputs so the annotation rules stay testable in isolation.
-import type { Annotation } from "../types";
+import type { Annotation, AnnotationLevel } from "../types";
+import type { OffsetRange } from "./selection";
 
 /**
  * The uniqueness rule: the same label may not cover the exact same range twice.
@@ -23,6 +24,80 @@ export function isDuplicate(
 export function nextTempId(items: { id: number }[]): number {
   const min = items.reduce((m, a) => Math.min(m, a.id), 0);
   return Math.min(-1, min - 1);
+}
+
+function trim(text: string, r: OffsetRange): OffsetRange {
+  let { start, end } = r;
+  while (start < end && /\s/.test(text[start])) start++;
+  while (end > start && /\s/.test(text[end - 1])) end--;
+  return { start, end };
+}
+
+function wordSegments(text: string): OffsetRange[] {
+  const segments: OffsetRange[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) segments.push({ start: m.index, end: m.index + m[0].length });
+  return segments;
+}
+
+/** Splits after a `.`/`!`/`?` run followed by whitespace or end-of-text. A
+ * heuristic — doesn't know about abbreviations — but predictable and good
+ * enough for snapping a selection to "the sentence it touches". */
+function sentenceSegments(text: string): OffsetRange[] {
+  const segments: OffsetRange[] = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const isTerminator = text[i] === "." || text[i] === "!" || text[i] === "?";
+    const atBoundary = i === text.length - 1 || /\s/.test(text[i + 1]);
+    if (isTerminator && atBoundary) {
+      segments.push(trim(text, { start, end: i + 1 }));
+      start = i + 1;
+    }
+  }
+  if (start < text.length) segments.push(trim(text, { start, end: text.length }));
+  return segments.filter((s) => s.end > s.start);
+}
+
+/** Splits on blank-line runs (tolerant of \r\n). Text with no blank line is
+ * one paragraph. */
+function paragraphSegments(text: string): OffsetRange[] {
+  const segments: OffsetRange[] = [];
+  const re = /\n\s*\n/g;
+  let start = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    segments.push(trim(text, { start, end: m.index }));
+    start = m.index + m[0].length;
+  }
+  segments.push(trim(text, { start, end: text.length }));
+  return segments.filter((s) => s.end > s.start);
+}
+
+/**
+ * Expand [start, end) to the union of every word/sentence/paragraph segment
+ * it overlaps, so a partial selection still captures the whole unit the
+ * annotator touched — a no-op for "character" and "document" levels. Only
+ * ever expands: a selection landing purely in whitespace (no segment
+ * overlap) falls back to itself unchanged.
+ */
+export function snapToLevel(
+  fullText: string,
+  level: AnnotationLevel,
+  start: number,
+  end: number,
+): OffsetRange {
+  const segmenter =
+    level === "word" ? wordSegments : level === "sentence" ? sentenceSegments : level === "paragraph" ? paragraphSegments : null;
+  if (!segmenter) return { start, end };
+
+  const overlapping = segmenter(fullText).filter((s) => s.start < end && s.end > start);
+  if (!overlapping.length) return { start, end };
+
+  return {
+    start: Math.min(start, ...overlapping.map((s) => s.start)),
+    end: Math.max(end, ...overlapping.map((s) => s.end)),
+  };
 }
 
 export interface Segment {
