@@ -14,6 +14,7 @@ import DocumentPane from "./DocumentPane.vue";
 import DocumentTextView from "./DocumentTextView.vue";
 import InspectorPane from "./InspectorPane.vue";
 import { useAnnotator } from "../model/useAnnotator";
+import { snapToLevel } from "../model/spans";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 
 // The annotator's workspace. Annotators move through their assigned documents
@@ -98,8 +99,13 @@ const setSelectionConfidence = (value: number) => {
   }
 };
 
-const onCreate = (payload: { start: number; end: number; text: string }) =>
-  createSpan(payload.start, payload.end, payload.text);
+// Snap the raw browser selection to the task's declared granularity — e.g. a
+// word-level task captures the whole word even if only part of it was
+// dragged over — before it becomes the stored annotation.
+const onCreate = (payload: { start: number; end: number; text: string }) => {
+  const range = snapToLevel(props.document.full_text, props.annotationLevel, payload.start, payload.end);
+  createSpan(range.start, range.end, props.document.full_text.slice(range.start, range.end));
+};
 
 const setActiveLabel = (label: Label) => {
   activeLabel.value = label;
@@ -237,6 +243,7 @@ onBeforeUnmount(() => {
     <AnnotatorHeader
       :status="assignment.status"
       :position="position"
+      :annotation-level="annotationLevel"
       :guidelines-url="guidelinesUrl"
       @previous="onPrevious"
       @save="onSaveClick"
