@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import type { Label } from "../types";
+import type { DocumentAnnotation, Label } from "../types";
 import StarRating from "./StarRating.vue";
 
 // Left column: label picker + confidence ratings.
 // Purely presentational for now — selecting a label does not annotate yet.
 const props = defineProps<{
   labels: Label[];
+  /** Document-level tasks show tag chips instead of the span-arming label list. */
+  documentLevel: boolean;
   activeLabel: Label | null;
   documentConfidence: number;
   annotationConfidence: number;
+  documentAnnotations: DocumentAnnotation[];
   /** Annotation confidence only applies to a selected region. */
   hasSelection?: boolean;
 }>();
@@ -18,6 +21,7 @@ defineEmits<{
   select: [label: Label];
   "update:documentConfidence": [value: number];
   "update:annotationConfidence": [value: number];
+  "toggle-document-label": [label: Label];
 }>();
 
 const filter = ref("");
@@ -28,6 +32,9 @@ const visible = computed(() =>
   ),
 );
 
+const isDocumentTagged = (label: Label) =>
+  props.documentAnnotations.some((d) => d.label === label.name);
+
 // Hotkeys mirror the current tool: 1–9 then 0 for the tenth label.
 const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ? "0" : "");
 </script>
@@ -36,7 +43,7 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
   <aside class="sidebar">
     <input v-model="filter" class="sidebar__filter" type="text" placeholder="Quick Filter" />
 
-    <ul class="labels">
+    <ul v-if="!documentLevel" class="labels">
       <li
         v-for="(label, i) in visible"
         :key="label.name"
@@ -50,8 +57,25 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
       </li>
     </ul>
 
+    <div v-else class="sidebar__doc-tags">
+      <h4 class="sidebar__doc-tags-title">Document Tags</h4>
+      <ul class="doc-tags">
+        <li
+          v-for="label in visible"
+          :key="label.name"
+          class="doc-tag"
+          :class="{ 'is-tagged': isDocumentTagged(label) }"
+          @click="$emit('toggle-document-label', label)"
+        >
+          <span class="doc-tag__swatch" :style="{ background: label.color }" />
+          <span class="doc-tag__name">{{ label.name }}</span>
+        </li>
+      </ul>
+    </div>
+
     <div class="sidebar__confidence">
       <StarRating
+        v-if="!documentLevel"
         label="Annotation Confidence"
         :model-value="annotationConfidence"
         :disabled="!hasSelection"
@@ -124,6 +148,44 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
   background: rgba(0, 0, 0, 0.08);
   border-radius: 4px;
   padding: 0 0.35rem;
+}
+.sidebar__doc-tags-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--lak-muted);
+}
+.doc-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.doc-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--lak-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  background: #fff;
+}
+.doc-tag:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.doc-tag.is-tagged {
+  background: var(--lak-accent);
+  border-color: var(--lak-accent);
+  color: #fff;
+}
+.doc-tag__swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 .sidebar__confidence {
   margin-top: auto;

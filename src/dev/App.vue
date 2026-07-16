@@ -17,6 +17,7 @@ const onComplete = () => console.log("complete!");
   <AnnotatorQueue
     :source="source"
     :labelset="task.labelset"
+    :annotation-level="task.annotation_level"
     :guidelines-url="task.ann_guidelines"
     @complete="onComplete"
   />

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 import type { AnnotationSource } from "../model/source";
-import type { Assignment, Labelset } from "../types";
+import type { AnnotationLevel, Assignment, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
 
@@ -11,6 +11,7 @@ import AnnotatorView from "./AnnotatorView.vue";
 const props = defineProps<{
   source: AnnotationSource;
   labelset: Labelset;
+  annotationLevel: AnnotationLevel;
   guidelinesUrl?: string;
   startPosition?: number;
 }>();
@@ -55,6 +56,7 @@ const onNext = async (assignment: Assignment) => {
     :document="bundle.document"
     :assignment="bundle.assignment"
     :labelset="labelset"
+    :annotation-level="annotationLevel"
     :position="queuePosition"
     :guidelines-url="guidelinesUrl"
     @save="onSave"

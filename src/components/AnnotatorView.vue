@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type {
   AnnotationDocument,
+  AnnotationLevel,
   Assignment,
   Label,
   Labelset,
@@ -10,6 +11,7 @@ import type {
 import AnnotatorHeader from "./AnnotatorHeader.vue";
 import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
+import DocumentTextView from "./DocumentTextView.vue";
 import InspectorPane from "./InspectorPane.vue";
 import { useAnnotator } from "../model/useAnnotator";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
@@ -19,10 +21,15 @@ import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 const props = defineProps<{
   document: AnnotationDocument;
   labelset: Labelset;
+  annotationLevel: AnnotationLevel;
   assignment: Assignment;
   position: QueuePosition;
   guidelinesUrl?: string;
 }>();
+
+// A task is either span-level or document-level, never both — this decides
+// which half of the workspace (span tools vs. whole-document tags) renders.
+const isDocumentLevel = computed(() => props.annotationLevel === "document");
 
 const emit = defineEmits<{
   save: [assignment: Assignment];
@@ -41,6 +48,7 @@ const resumedUnsaved = ref(existingDraft !== null);
 
 const {
   annotations,
+  documentAnnotations,
   activeLabel,
   selectedId,
   dirty,
@@ -55,7 +63,12 @@ const {
   removeRelation,
   setRelationDirection,
   setRelationLabels,
-} = useAnnotator(existingDraft?.annotations ?? props.assignment.annotations);
+  toggleDocumentLabel,
+  removeDocumentAnnotation,
+} = useAnnotator(
+  existingDraft?.annotations ?? props.assignment.annotations,
+  existingDraft?.documentAnnotations ?? props.assignment.document_annotations,
+);
 
 const selectedAnnotation = computed(
   () => annotations.value.find((a) => a.id === selectedId.value) ?? null,
@@ -86,8 +99,13 @@ const savedConfidence = ref(props.assignment.confidence);
 
 // Buffer every edit locally so a crash/reload can resume from here.
 watch(
-  [annotations, documentConfidence],
-  () => saveDraft(draftKey, { annotations: annotations.value, confidence: documentConfidence.value }),
+  [annotations, documentAnnotations, documentConfidence],
+  () =>
+    saveDraft(draftKey, {
+      annotations: annotations.value,
+      documentAnnotations: documentAnnotations.value,
+      confidence: documentConfidence.value,
+    }),
   { deep: true },
 );
 
@@ -105,10 +123,13 @@ const hasUnsavedChanges = computed(
 const snapshot = computed<Assignment>(() => ({
   ...props.assignment,
   annotations: annotations.value,
+  document_annotations: documentAnnotations.value,
   confidence: documentConfidence.value,
 }));
 
-const hasAnnotations = computed(() => annotations.value.length > 0);
+const hasAnnotations = computed(
+  () => annotations.value.length > 0 || documentAnnotations.value.length > 0,
+);
 
 const labelColors = computed(() =>
   Object.fromEntries(props.labelset.labels.map((l) => [l.name, l.color])),
@@ -155,8 +176,10 @@ const onNext = () => {
   emit("next", snapshot.value);
 };
 
-// Number keys arm a label: 1–9 for the first nine, 0 for the tenth.
+// Number keys arm a label: 1–9 for the first nine, 0 for the tenth. Only
+// meaningful for span tasks — document-level tags have nothing to arm.
 const onKey = (e: KeyboardEvent) => {
+  if (isDocumentLevel.value) return;
   const el = e.target as HTMLElement | null;
   if (
     e.ctrlKey ||
@@ -203,14 +226,19 @@ onBeforeUnmount(() => {
     <div class="lak-annotator__body">
       <LabelSidebar
         :labels="labelset.labels"
+        :document-level="isDocumentLevel"
         :active-label="activeLabel"
         :has-selection="selectedId !== null"
         :annotation-confidence="selectedAnnotation?.confidence ?? 0"
+        :document-annotations="documentAnnotations"
         v-model:document-confidence="documentConfidence"
         @select="setActiveLabel"
         @update:annotation-confidence="setAnnotationConfidence"
+        @toggle-document-label="toggleDocumentLabel"
       />
+      <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
       <DocumentPane
+        v-else
         :text="document.full_text"
         :annotations="annotations"
         :colors="labelColors"
@@ -220,12 +248,15 @@ onBeforeUnmount(() => {
         @select="onActivate"
       />
       <InspectorPane
+        :document-level="isDocumentLevel"
         :annotations="annotations"
+        :document-annotations="documentAnnotations"
         :colors="labelColors"
         :selected-id="selectedId"
         :linking-from="linkingFrom"
         @select="onActivate"
         @remove="remove"
+        @remove-document-annotation="removeDocumentAnnotation"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import type { Annotation, RelationDirection } from "../types";
+import type { Annotation, DocumentAnnotation, RelationDirection } from "../types";
 import RelationList from "./RelationList.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
 // annotator select, delete or link them.
 defineProps<{
+  documentLevel: boolean;
   annotations: Annotation[];
+  documentAnnotations: DocumentAnnotation[];
   colors: Record<string, string>;
   selectedId: number | null;
   linkingFrom: number | null;
@@ -14,6 +16,7 @@ defineProps<{
 const emit = defineEmits<{
   select: [id: number];
   remove: [id: number];
+  "remove-document-annotation": [id: number];
   link: [id: number];
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
@@ -23,47 +26,72 @@ const emit = defineEmits<{
 
 <template>
   <aside class="inspector">
-    <h4 class="inspector__title">Annotations ({{ annotations.length }})</h4>
-
-    <ul class="regions">
-      <li
-        v-for="(a, i) in annotations"
-        :key="a.id"
-        class="region"
-        :class="{ 'is-selected': a.id === selectedId }"
-        :style="{ '--region-color': colors[a.label] }"
-        @click="emit('select', a.id)"
-      >
-        <span class="region__index">{{ i + 1 }}</span>
-        <span class="region__swatch" :style="{ background: colors[a.label] }" />
-        <span class="region__label">{{ a.label }}</span>
-        <span class="region__text">{{ a.text }}</span>
-        <button
-          v-if="a.id === selectedId"
-          class="region__act"
-          title="Draw a relation from this region"
-          @click.stop="emit('link', a.id)"
+    <template v-if="documentLevel">
+      <h4 class="inspector__title">Document Tags ({{ documentAnnotations.length }})</h4>
+      <ul class="regions">
+        <li
+          v-for="d in documentAnnotations"
+          :key="d.id"
+          class="region"
+          :style="{ '--region-color': colors[d.label] }"
         >
-          🔗
-        </button>
-        <button class="region__act" title="Delete" @click.stop="emit('remove', a.id)">
-          🗑
-        </button>
-      </li>
-      <li v-if="!annotations.length" class="regions__empty">No annotations yet.</li>
-    </ul>
+          <span class="region__swatch" :style="{ background: colors[d.label] }" />
+          <span class="region__label">{{ d.label }}</span>
+          <button
+            class="region__act"
+            title="Remove"
+            @click.stop="emit('remove-document-annotation', d.id)"
+          >
+            🗑
+          </button>
+        </li>
+        <li v-if="!documentAnnotations.length" class="regions__empty">No document tags yet.</li>
+      </ul>
+    </template>
 
-    <p v-if="linkingFrom !== null" class="linking-hint">
-      Click a target region to link it.
-    </p>
+    <template v-else>
+      <h4 class="inspector__title">Annotations ({{ annotations.length }})</h4>
 
-    <RelationList
-      :annotations="annotations"
-      :colors="colors"
-      @remove="(from, to) => emit('remove-relation', from, to)"
-      @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
-      @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"
-    />
+      <ul class="regions">
+        <li
+          v-for="(a, i) in annotations"
+          :key="a.id"
+          class="region"
+          :class="{ 'is-selected': a.id === selectedId }"
+          :style="{ '--region-color': colors[a.label] }"
+          @click="emit('select', a.id)"
+        >
+          <span class="region__index">{{ i + 1 }}</span>
+          <span class="region__swatch" :style="{ background: colors[a.label] }" />
+          <span class="region__label">{{ a.label }}</span>
+          <span class="region__text">{{ a.text }}</span>
+          <button
+            v-if="a.id === selectedId"
+            class="region__act"
+            title="Draw a relation from this region"
+            @click.stop="emit('link', a.id)"
+          >
+            🔗
+          </button>
+          <button class="region__act" title="Delete" @click.stop="emit('remove', a.id)">
+            🗑
+          </button>
+        </li>
+        <li v-if="!annotations.length" class="regions__empty">No annotations yet.</li>
+      </ul>
+
+      <p v-if="linkingFrom !== null" class="linking-hint">
+        Click a target region to link it.
+      </p>
+
+      <RelationList
+        :annotations="annotations"
+        :colors="colors"
+        @remove="(from, to) => emit('remove-relation', from, to)"
+        @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
+        @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"
+      />
+    </template>
   </aside>
 </template>
 
