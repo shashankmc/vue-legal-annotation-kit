@@ -1,15 +1,24 @@
 <script setup lang="ts">
-import type { AssignmentStatus, QueuePosition } from "../types";
+import type { AnnotationLevel, AssignmentStatus, QueuePosition } from "../types";
 
-// Top bar: guidelines link, status, progress, and sequence navigation.
+// Top bar: guidelines link, level, status, progress, and sequence navigation.
 // Emits raw intents; the parent decides what saving/advancing means.
 const props = defineProps<{
   status: AssignmentStatus;
   position: QueuePosition;
+  annotationLevel: AnnotationLevel;
   guidelinesUrl?: string;
 }>();
 
 defineEmits<{ previous: []; save: []; next: [] }>();
+
+const LEVEL_LABELS: Record<AnnotationLevel, string> = {
+  character: "Character-level",
+  word: "Word-level",
+  sentence: "Sentence-level",
+  paragraph: "Paragraph-level",
+  document: "Document-level",
+};
 
 const isFirst = () => props.position.current <= 1;
 const isLast = () => props.position.current >= props.position.total;
@@ -24,13 +33,14 @@ const percent = () =>
     <div class="header__left">
       <a
         v-if="guidelinesUrl"
-        class="btn btn--outline"
+        class="guidelines-link"
         :href="guidelinesUrl"
         target="_blank"
         rel="noopener"
       >
-        See Annotation Guidelines
+        📖 See Annotation Guidelines
       </a>
+      <span class="badge badge--level">{{ LEVEL_LABELS[annotationLevel] }}</span>
       <span class="badge" :class="status === 'done' ? 'badge--done' : 'badge--pending'">
         {{ status }}
       </span>
@@ -107,6 +117,18 @@ const percent = () =>
 }
 .badge--pending {
   background: var(--lak-danger);
+}
+.badge--level {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--lak-muted);
+}
+.guidelines-link {
+  font-size: 0.8rem;
+  color: var(--lak-accent);
+  text-decoration: none;
+}
+.guidelines-link:hover {
+  text-decoration: underline;
 }
 .btn {
   font: inherit;
