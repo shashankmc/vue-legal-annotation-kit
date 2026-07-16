@@ -1,5 +1,11 @@
 import { ref } from "vue";
-import type { Annotation, DocumentAnnotation, Label, RelationDirection } from "../types";
+import type {
+  Annotation,
+  DocumentAnnotation,
+  DocumentRelation,
+  Label,
+  RelationDirection,
+} from "../types";
 import { isDuplicate, nextTempId } from "./spans";
 
 /**
@@ -7,9 +13,14 @@ import { isDuplicate, nextTempId } from "./spans";
  * the label currently armed for the next selection, and which region is
  * selected. Rendering and DOM concerns live elsewhere.
  */
-export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: DocumentAnnotation[] = []) {
+export function useAnnotator(
+  initial: Annotation[],
+  initialDocumentAnnotations: DocumentAnnotation[] = [],
+  initialDocumentRelations: DocumentRelation[] = [],
+) {
   const annotations = ref<Annotation[]>([...initial]);
   const documentAnnotations = ref<DocumentAnnotation[]>([...initialDocumentAnnotations]);
+  const documentRelations = ref<DocumentRelation[]>([...initialDocumentRelations]);
   const activeLabel = ref<Label | null>(null);
   const selectedId = ref<number | null>(null);
   const selectedDocumentAnnotationId = ref<number | null>(null);
@@ -77,6 +88,38 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     const d = documentAnnotations.value.find((d) => d.id === id);
     if (d) {
       d.confidence = value;
+      dirty.value = true;
+    }
+  }
+
+  // --- Document-to-document relations (keyed by target document name) --------
+  const findDocRelation = (toName: string) =>
+    documentRelations.value.find((r) => r.to === toName);
+
+  /** Point the current document at another (no duplicate targets). */
+  function addDocumentRelation(toName: string) {
+    if (!toName || findDocRelation(toName)) return;
+    documentRelations.value.push({ to: toName, direction: "right", labels: [] });
+    dirty.value = true;
+  }
+
+  function removeDocumentRelation(toName: string) {
+    documentRelations.value = documentRelations.value.filter((r) => r.to !== toName);
+    dirty.value = true;
+  }
+
+  function setDocumentRelationDirection(toName: string, direction: RelationDirection) {
+    const rel = findDocRelation(toName);
+    if (rel) {
+      rel.direction = direction;
+      dirty.value = true;
+    }
+  }
+
+  function setDocumentRelationLabels(toName: string, labels: string[]) {
+    const rel = findDocRelation(toName);
+    if (rel) {
+      rel.labels = labels;
       dirty.value = true;
     }
   }
@@ -155,6 +198,7 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
   return {
     annotations,
     documentAnnotations,
+    documentRelations,
     activeLabel,
     selectedId,
     selectedDocumentAnnotationId,
@@ -174,5 +218,9 @@ export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: 
     removeDocumentAnnotation,
     setDocumentAnnotationConfidence,
     selectDocumentAnnotation,
+    addDocumentRelation,
+    removeDocumentRelation,
+    setDocumentRelationDirection,
+    setDocumentRelationLabels,
   };
 }
