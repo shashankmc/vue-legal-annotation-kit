@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Annotation, Label, RelationDirection } from "../types";
+import type { Annotation, DocumentAnnotation, Label, RelationDirection } from "../types";
 import { isDuplicate, nextTempId } from "./spans";
 
 /**
@@ -7,8 +7,9 @@ import { isDuplicate, nextTempId } from "./spans";
  * the label currently armed for the next selection, and which region is
  * selected. Rendering and DOM concerns live elsewhere.
  */
-export function useAnnotator(initial: Annotation[]) {
+export function useAnnotator(initial: Annotation[], initialDocumentAnnotations: DocumentAnnotation[] = []) {
   const annotations = ref<Annotation[]>([...initial]);
+  const documentAnnotations = ref<DocumentAnnotation[]>([...initialDocumentAnnotations]);
   const activeLabel = ref<Label | null>(null);
   const selectedId = ref<number | null>(null);
   const dirty = ref(false);
@@ -38,6 +39,27 @@ export function useAnnotator(initial: Annotation[]) {
     selectedId.value = annotation.id;
     dirty.value = true;
     return annotation;
+  }
+
+  /** Toggle a whole-document label: adds it if absent, removes it if already
+   * applied. Document-level tags carry no offsets, so there is no "same range"
+   * duplicate rule — just one entry per label. */
+  function toggleDocumentLabel(label: Label) {
+    const existing = documentAnnotations.value.find((d) => d.label === label.name);
+    if (existing) {
+      documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== existing.id);
+    } else {
+      documentAnnotations.value.push({
+        id: nextTempId(documentAnnotations.value),
+        label: label.name,
+      });
+    }
+    dirty.value = true;
+  }
+
+  function removeDocumentAnnotation(id: number) {
+    documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== id);
+    dirty.value = true;
   }
 
   function remove(id: number) {
@@ -113,6 +135,7 @@ export function useAnnotator(initial: Annotation[]) {
 
   return {
     annotations,
+    documentAnnotations,
     activeLabel,
     selectedId,
     dirty,
@@ -127,5 +150,7 @@ export function useAnnotator(initial: Annotation[]) {
     removeRelation,
     setRelationDirection,
     setRelationLabels,
+    toggleDocumentLabel,
+    removeDocumentAnnotation,
   };
 }

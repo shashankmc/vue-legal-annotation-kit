@@ -17,10 +17,11 @@ export function isDuplicate(
   );
 }
 
-/** Next temporary id for a client-created annotation (negative to avoid
- * clashing with real database ids until the row is persisted). */
-export function nextTempId(annotations: Annotation[]): number {
-  const min = annotations.reduce((m, a) => Math.min(m, a.id), 0);
+/** Next temporary id for a client-created item (negative to avoid clashing
+ * with real database ids until the row is persisted). Shared by annotations
+ * and document-level annotations, each keeping their own id sequence. */
+export function nextTempId(items: { id: number }[]): number {
+  const min = items.reduce((m, a) => Math.min(m, a.id), 0);
   return Math.min(-1, min - 1);
 }
 
