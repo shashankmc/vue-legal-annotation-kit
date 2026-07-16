@@ -71,6 +71,16 @@ export interface DocumentAnnotation {
   confidence: number;
 }
 
+/** A relation from the whole current document to another whole document.
+ * The "from" is the assignment's own document; `to` names the target. Edges
+ * are stored once, on the source document's assignment. */
+export interface DocumentRelation {
+  /** Target document's `name`. */
+  to: string;
+  direction: RelationDirection;
+  labels: string[];
+}
+
 export interface Assignment {
   annotator: number;
   /** Position in the annotator's queue (1-based when displayed). */
@@ -80,6 +90,7 @@ export interface Assignment {
   confidence: number;
   annotations: Annotation[];
   document_annotations: DocumentAnnotation[];
+  document_relations: DocumentRelation[];
 }
 
 export interface AnnotationDocument {
