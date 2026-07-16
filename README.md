@@ -127,7 +127,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `ann_guidelines` | string (URL) | Linked by the *See Annotation Guidelines* button. |
 | `documents` | array | The documents to annotate (below). |
 | `counts` | object | **Derived** summary — see [Counts](#counts). |
-| `annotation_level` | string | Granularity for span annotations: `character` \| `word` \| `sentence` \| `paragraph`. |
+| `annotation_level` | string | `character` \| `word` \| `sentence` \| `paragraph` \| `document`. The first four are span granularities; `document` means the whole task is document-level tagging — see below. A task is one or the other, never both. |
 
 ### `labelset`
 | Field | Type | Notes |
@@ -150,7 +150,8 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `order` | number | Position in that annotator's queue (drives Next/Back + progress). |
 | `status` | string | `done` \| `pending`. Shown as the header badge. |
 | `confidence` | number (0–5) | **Assignment-level confidence** stars (*Document Confidence* in the UI); `0` = unrated. |
-| `annotations` | array | The span annotations (empty for pending work). |
+| `annotations` | array | The span annotations. Populated only when the task's `annotation_level` is a span granularity; always empty for `document`-level tasks. |
+| `document_annotations` | array | Whole-document tags (below). Populated only when `annotation_level` is `document`; always empty for span-level tasks. |
 
 ### `documents[].assignments[].annotations[]`
 | Field | Type | Notes |
@@ -164,6 +165,12 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `confidence` | number (0–5) | **Span-level confidence** stars; `0` = unrated. |
 | `metadata` | string \| null | Free-text per-span metadata (user-facing). |
 | `html_metadata` | object \| null | HTML offset positions (`start`, `end`, `startOffset`, `endOffset`, `globalOffsets`); HTML docs only. |
+
+### `documents[].assignments[].document_annotations[]`
+| Field | Type | Notes |
+|---|---|---|
+| `id` | number | Stable unique document-annotation ID (assigned by our database). |
+| `label` | string | Must match a `labelset` label name. No `start`/`end`/`text` — it tags the whole document, not a span. At most one entry per label; toggled on/off in the UI. |
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
@@ -229,7 +236,5 @@ _(`to: 2` points at the annotation whose `id` is `2`.)_
   `in_progress`, `skipped`)?
 - **Relation `direction` enum.** Sample shows `right`; confirm the full set
   (`left`/`right`/bidirectional/none?).
-- **Document-level annotations.** Confirm how document (non-span) annotations are
-  represented in the JSON — the sample only contains span annotations.
 - **Multi-annotator view.** How does the current user's identity select which
   `assignment` queue is shown, and can annotators see each other's work?
