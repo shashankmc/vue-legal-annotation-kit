@@ -38,7 +38,7 @@ const percent = () =>
         target="_blank"
         rel="noopener"
       >
-        📖 See Annotation Guidelines
+        See Annotation Guidelines
       </a>
       <span class="badge badge--level">{{ LEVEL_LABELS[annotationLevel] }}</span>
       <span class="badge" :class="status === 'done' ? 'badge--done' : 'badge--pending'">
@@ -57,7 +57,7 @@ const percent = () =>
       <button class="btn btn--outline" :disabled="isFirst()" @click="$emit('previous')">
         ← Back
       </button>
-      <button class="btn btn--outline btn--icon" title="Save" @click="$emit('save')">💾</button>
+      <button class="btn btn--outline" @click="$emit('save')">Save</button>
       <button class="btn btn--primary" @click="$emit('next')">
         {{ isLast() ? "Finish" : "Next →" }}
       </button>
@@ -150,8 +150,5 @@ const percent = () =>
 .btn--primary {
   background: var(--lak-accent);
   color: #fff;
-}
-.btn--icon {
-  padding: 0.4rem 0.55rem;
 }
 </style>
