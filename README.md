@@ -127,7 +127,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `ann_guidelines` | string (URL) | Linked by the *See Annotation Guidelines* button. |
 | `documents` | array | The documents to annotate (below). |
 | `counts` | object | **Derived** summary — see [Counts](#counts). |
-| `annotation_level` | string | `character` \| `word` \| `sentence` \| `paragraph` \| `document`. The first four are span granularities; `document` means the whole task is document-level tagging — see below. A task is one or the other, never both. |
+| `annotation_level` | string | `character` \| `word` \| `sentence` \| `paragraph` \| `document`. The first four are span granularities; `document` means the whole task is document-level tagging — see below. A task is one or the other, never both. For `word`/`sentence`/`paragraph`, a selection is snapped to cover the whole unit it touches — a partial drag over one word still captures (and stores) the entire word, sentence, or paragraph, not just what was dragged. Shown to the annotator as a badge in the header. |
 
 ### `labelset`
 | Field | Type | Notes |
