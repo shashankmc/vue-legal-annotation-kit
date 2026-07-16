@@ -32,8 +32,8 @@ const byId = computed(
 
 const segments = computed(() => segmentText(props.text, props.annotations));
 
-// The most specific (smallest) annotation covering a segment drives its colour
-// and click target; that's the one a user most likely means to act on.
+// The most specific (smallest) annotation covering a segment drives its
+// click target; that's the one a user most likely means to act on next.
 const primary = (ids: number[]): Annotation | undefined => {
   let best: Annotation | undefined;
   for (const id of ids) {
@@ -41,6 +41,17 @@ const primary = (ids: number[]): Annotation | undefined => {
     if (a && (!best || a.end - a.start < best.end - best.start)) best = a;
   }
   return best;
+};
+
+// Colour, though, prefers whichever covering annotation is currently
+// selected — so on an overlap, selecting one brings its colour to the
+// foreground and shows its full extent, rather than always being hidden
+// behind the smallest one.
+const foreground = (ids: number[]): Annotation | undefined => {
+  if (props.selectedId !== null && ids.includes(props.selectedId)) {
+    return byId.value.get(props.selectedId);
+  }
+  return primary(ids);
 };
 
 const onMouseUp = () => {
@@ -137,7 +148,7 @@ onBeforeUnmount(() => observer?.disconnect());
               'is-selected': seg.annotationIds.includes(selectedId ?? NaN),
               'is-overlap': seg.annotationIds.length > 1,
             }"
-            :style="{ '--mark-color': colors[primary(seg.annotationIds)!.label] }"
+            :style="{ '--mark-color': colors[foreground(seg.annotationIds)!.label] }"
             :title="seg.annotationIds.map((id) => byId.get(id)?.label).join(', ')"
             @click.stop="emit('select', primary(seg.annotationIds)!.id)"
             >{{ seg.text }}</mark
