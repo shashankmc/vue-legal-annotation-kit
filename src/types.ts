@@ -1,7 +1,10 @@
 // Data model for the annotation format. Mirrors the JSON contract in README §4.
 // Pure types only — no framework, no logic.
 
-export type AnnotationLevel = "character" | "word" | "sentence" | "paragraph";
+// "document" means the whole task is document-level tagging: documents carry
+// only `document_annotations`, never span `annotations`. The others describe
+// span granularity for span-level tasks.
+export type AnnotationLevel = "character" | "word" | "sentence" | "paragraph" | "document";
 
 export type RelationDirection = "bi" | "left" | "right";
 
@@ -59,6 +62,13 @@ export interface Annotation {
   metadata?: string | null;
 }
 
+/** A categorical tag applied to a whole document, not a text span. */
+export interface DocumentAnnotation {
+  id: number;
+  /** Must match a `labelset` label name. */
+  label: string;
+}
+
 export interface Assignment {
   annotator: number;
   /** Position in the annotator's queue (1-based when displayed). */
@@ -67,6 +77,7 @@ export interface Assignment {
   /** Document-level confidence, 0–5 stars; 0 = unrated. */
   confidence: number;
   annotations: Annotation[];
+  document_annotations: DocumentAnnotation[];
 }
 
 export interface AnnotationDocument {
