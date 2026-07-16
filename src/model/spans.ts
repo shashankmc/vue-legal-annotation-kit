@@ -41,16 +41,28 @@ function wordSegments(text: string): OffsetRange[] {
   return segments;
 }
 
-/** Splits after a `.`/`!`/`?` run followed by whitespace or end-of-text. A
- * heuristic — doesn't know about abbreviations — but predictable and good
- * enough for snapping a selection to "the sentence it touches". */
+/** True if the first non-whitespace character at/after index `i` is an
+ * uppercase letter, or there is none (end of text). Guards against
+ * abbreviations like "Art. 5" — "5" isn't capitalized, so that period
+ * doesn't end the sentence. */
+function followedByCapitalOrEnd(text: string, i: number): boolean {
+  let j = i;
+  while (j < text.length && /\s/.test(text[j])) j++;
+  return j === text.length || /[A-Z]/.test(text[j]);
+}
+
+/** Splits after a `.`/`!`/`?` run followed by whitespace (or end-of-text)
+ * and then a capitalized word (or end-of-text). A heuristic — doesn't know
+ * about abbreviations in general — but the capitalization check handles the
+ * common case, and it's predictable and good enough for snapping a
+ * selection to "the sentence it touches". */
 function sentenceSegments(text: string): OffsetRange[] {
   const segments: OffsetRange[] = [];
   let start = 0;
   for (let i = 0; i < text.length; i++) {
     const isTerminator = text[i] === "." || text[i] === "!" || text[i] === "?";
     const atBoundary = i === text.length - 1 || /\s/.test(text[i + 1]);
-    if (isTerminator && atBoundary) {
+    if (isTerminator && atBoundary && followedByCapitalOrEnd(text, i + 1)) {
       segments.push(trim(text, { start, end: i + 1 }));
       start = i + 1;
     }
