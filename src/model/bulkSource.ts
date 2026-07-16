@@ -36,6 +36,13 @@ export function createBulkSource(
         persist();
       }
     },
+    listDocuments() {
+      // Already in queue order (flattenAssignments sorts by order).
+      return bundles.map((b) => ({
+        name: b.document.name,
+        order: b.assignment.order,
+      }));
+    },
     finish() {
       console.log(JSON.parse(localStorage.getItem(storageKey) ?? "null"));
       localStorage.removeItem(storageKey);

@@ -5,6 +5,14 @@ export interface AssignmentBundle {
   assignment: Assignment;
 }
 
+/** A lightweight identifier for one document in the annotator's queue — enough
+ * to populate the document-relation target picker without loading any
+ * document's full text or annotations. */
+export interface DocumentRef {
+  name: string;
+  order: number;
+}
+
 /**
  * The host's data-access contract. The package only ever asks for "the
  * assignment at this position" and "persist this assignment" — whether that
@@ -19,6 +27,13 @@ export interface AnnotationSource {
   load(position: number): Promise<AssignmentBundle>;
   /** Persist the given assignment's annotations, confidence and status. */
   save(assignment: Assignment): Promise<void>;
+  /**
+   * List the annotator's queue (in queue order) as lightweight name/order
+   * refs — used only to populate the document-relation target picker, so it
+   * loads no full text or annotations. Optional: hosts that omit it simply
+   * won't surface the document-relations UI.
+   */
+  listDocuments?(): Promise<DocumentRef[]> | DocumentRef[];
   /**
    * Called once the annotator advances past the last document. Optional —
    * sources that buffer locally (e.g. an offline cache) can use this to flush
