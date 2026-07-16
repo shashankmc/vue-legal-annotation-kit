@@ -152,6 +152,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `confidence` | number (0–5) | **Assignment-level confidence** stars (*Document Confidence* in the UI); `0` = unrated. |
 | `annotations` | array | The span annotations. Populated only when the task's `annotation_level` is a span granularity; always empty for `document`-level tasks. |
 | `document_annotations` | array | Whole-document tags (below). Populated only when `annotation_level` is `document`; always empty for span-level tasks. |
+| `document_relations` | array | Relations from this whole document to other whole documents (below). Document-level tasks only. |
 
 ### `documents[].assignments[].annotations[]`
 | Field | Type | Notes |
@@ -179,6 +180,19 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `to` | number | **`id` of the target annotation** it relates to. |
 | `direction` | string | `left` \| `right` (relation arrow direction). |
 | `labels` | array of string | One or more relation labels (e.g. `["Has a"]`). |
+
+### `documents[].assignments[].document_relations[]`
+Relations between whole documents (document-level tasks). The owning assignment's
+document is the implicit "from"; each edge is stored **once**, on that source
+document — a document is not told which others point at it (a future graph view may
+surface the full picture). Populating the target picker needs the optional
+`AnnotationSource.listDocuments()` (lightweight name/order refs); without it the UI hides.
+
+| Field | Type | Notes |
+|---|---|---|
+| `to` | string | **`name` of the target document** it relates to. |
+| `direction` | string | `left` \| `right` \| `bi`. |
+| `labels` | array of string | Relation labels, same vocabulary as span relations. |
 
 ### `counts`
 Derived/denormalized summary — recompute rather than trust blindly:
