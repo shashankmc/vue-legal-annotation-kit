@@ -74,7 +74,11 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
     </div>
 
     <div class="sidebar__confidence">
+      <!-- Span mode: always shown, disabled without a selection (there's
+           always something to arm next). Document mode: no chip is "next" the
+           way an armed label is, so hide it entirely until a tag is selected. -->
       <StarRating
+        v-if="!documentLevel || hasSelection"
         :label="documentLevel ? 'Tag Confidence' : 'Annotation Confidence'"
         :model-value="annotationConfidence"
         :disabled="!hasSelection"
