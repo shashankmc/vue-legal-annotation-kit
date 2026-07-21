@@ -54,11 +54,41 @@ const percent = () =>
         ← Back
       </button>
       <button
-        class="btn btn--outline"
+        class="btn btn--outline btn--save"
         :class="{ 'btn--unsaved': unsaved && !justSaved, 'btn--saved': justSaved }"
         @click="$emit('save')"
       >
-        {{ justSaved ? "Saved ✓" : "Save" }}
+        <span class="btn__icon" aria-hidden="true">
+          <svg
+            v-if="!justSaved"
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M2.5 2.5h8l2.5 2.5v8.5h-10.5z" />
+            <path d="M4.5 2.5v4h5v-4" />
+            <path d="M4.5 13.5v-4h6.5v4" />
+          </svg>
+          <svg
+            v-else
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 8.4l3.1 3.1L13 4.6" />
+          </svg>
+        </span>
+        Save
       </button>
       <button class="btn btn--primary" @click="$emit('next')">
         {{ isLast() ? "Finish" : "Next →" }}
@@ -160,6 +190,22 @@ const percent = () =>
 .btn--primary {
   background: var(--lak-accent);
   color: #fff;
+}
+.btn--save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  /* Fixed width so the icon swap on save never reflows the rest of the header. */
+  min-width: 5.5rem;
+}
+.btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 .btn--unsaved {
   border-color: #d97706;
