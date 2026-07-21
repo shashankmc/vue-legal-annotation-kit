@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { AnnotationSource, DocumentRef } from "../model/source";
-import type { AnnotationLevel, Assignment, Labelset } from "../types";
+import type { AnnotationLevel, Assignment, DocumentRelation, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
 
@@ -61,6 +61,41 @@ const onNext = async (assignment: Assignment) => {
   }
   await goTo(position.value + 1);
 };
+
+// An outgoing relation the annotator creates on the current document gets a
+// matching `incoming` backlink written directly to the target document's own
+// record — it isn't open in any editor right now, so there's no live state to
+// update, just plain load+save. Only ever touches `incoming` entries on the
+// target; an outgoing relation the target's own annotator created is a
+// separate record and untouched by this.
+const mutateIncoming = async (
+  toName: string,
+  mutate: (relations: DocumentRelation[], fromName: string) => DocumentRelation[],
+) => {
+  const fromName = bundle.value?.document.name;
+  const docRef = docRefs.value.find((d) => d.name === toName);
+  if (!fromName || !docRef) return;
+  const target = await props.source.load(docRef.order);
+  target.assignment.document_relations = mutate(target.assignment.document_relations, fromName);
+  await props.source.save(target.assignment);
+};
+
+const onLinkDocument = (toName: string) =>
+  mutateIncoming(toName, (relations, fromName) =>
+    relations.some((r) => r.to === fromName && r.direction === "incoming")
+      ? relations
+      : [...relations, { to: fromName, direction: "incoming", labels: [] }],
+  );
+
+const onUnlinkDocument = (toName: string) =>
+  mutateIncoming(toName, (relations, fromName) =>
+    relations.filter((r) => !(r.to === fromName && r.direction === "incoming")),
+  );
+
+const onRelabelDocumentRelation = (toName: string, labels: string[]) =>
+  mutateIncoming(toName, (relations, fromName) =>
+    relations.map((r) => (r.to === fromName && r.direction === "incoming" ? { ...r, labels } : r)),
+  );
 </script>
 
 <template>
@@ -77,6 +112,9 @@ const onNext = async (assignment: Assignment) => {
     @save="onSave"
     @next="onNext"
     @previous="onPrevious"
+    @link-document="onLinkDocument"
+    @unlink-document="onUnlinkDocument"
+    @relabel-document-relation="onRelabelDocumentRelation"
   />
   <div v-else-if="loading" class="lak-queue-status">Loading…</div>
   <div v-else-if="error" class="lak-queue-status lak-queue-status--error">
