@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Local dev harness — verifies AnnotatorQueue + createBulkSource end to end
-// against the original Small Task.json export (annotator 1's 3 assignments).
 import AnnotatorQueue from "../components/AnnotatorQueue.vue";
 import { createBulkSource } from "../model/bulkSource";
 import { toTaskData } from "./legacyAdapter";
