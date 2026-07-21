@@ -166,11 +166,12 @@ const snapshot = computed<Assignment>(() => ({
   confidence: documentConfidence.value,
 }));
 
-const hasAnnotations = computed(
-  () =>
-    annotations.value.length > 0 ||
-    documentAnnotations.value.length > 0 ||
-    documentRelations.value.length > 0,
+// A task is either span-level or document-level (see isDocumentLevel above),
+// so only that half's data should count toward "has this been annotated".
+const hasAnnotations = computed(() =>
+  isDocumentLevel.value
+    ? documentAnnotations.value.length > 0 || documentRelations.value.length > 0
+    : annotations.value.length > 0,
 );
 
 const labelColors = computed(() =>
