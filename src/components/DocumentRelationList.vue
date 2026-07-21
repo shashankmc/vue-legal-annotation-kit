@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import type { DocumentRelation } from "../types";
+import { ref } from "vue";
+import type { DocumentRelation, DocumentRelationDirection } from "../types";
 import type { DocumentRef } from "../model/source";
 import { RELATION_LABELS } from "../types";
 
 // Document-level counterpart to RelationList: the current document's
 // relations to other whole documents. Keyed by target document name (no
-// annotation ids, no colours). Split into what this document explicitly
-// links to (editable) and what links to it (an auto-mirrored, read-only
-// backlink — editing that requires going to the other document).
+// annotation ids, no colours). Creating one also seeds the mirror-image entry
+// on the target document — after that, every row here (auto-seeded or not)
+// is a normal, independent, fully editable relation.
 const props = defineProps<{
   relations: DocumentRelation[];
   /** Queue documents this one may point at, minus itself. */
@@ -15,27 +16,31 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  add: [toName: string];
+  add: [toName: string, direction: DocumentRelationDirection];
   remove: [toName: string];
+  "set-direction": [toName: string, direction: DocumentRelationDirection];
   "set-labels": [toName: string, labels: string[]];
 }>();
 
-const outgoing = () => props.relations.filter((r) => r.direction === "outgoing");
-const incoming = () => props.relations.filter((r) => r.direction === "incoming");
+const ARROWS: Record<DocumentRelationDirection, string> = { right: "→", left: "←" };
+const nextDirection = (d: DocumentRelationDirection): DocumentRelationDirection =>
+  d === "right" ? "left" : "right";
 
 const available = (labels: string[]) =>
   RELATION_LABELS.filter((l) => !labels.includes(l));
 
-// A document already linked to (outgoing) can't be picked again — but one
-// that merely links to this document (incoming only) still can, since that's
-// how a real two-way pair gets made: each side creates its own outgoing link.
+// Only documents not already related to (either direction) can be added.
 const addable = () => {
-  const taken = new Set(outgoing().map((r) => r.to));
+  const taken = new Set(props.relations.map((r) => r.to));
   return props.otherDocuments.filter((d) => !taken.has(d.name));
 };
 
+// Direction for the next relation to be created — chosen before picking a
+// target, so the mirror seeded on the target starts out correct.
+const pendingDirection = ref<DocumentRelationDirection>("right");
+
 const addRelation = (name: string) => {
-  if (name) emit("add", name);
+  if (name) emit("add", name, pendingDirection.value);
 };
 const addLabel = (rel: DocumentRelation, label: string) => {
   if (label) emit("set-labels", rel.to, [...rel.labels, label]);
@@ -49,10 +54,16 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
     <h4 class="doc-relations__title">Document Relations ({{ relations.length }})</h4>
 
     <ul class="rel-list">
-      <li v-for="rel in outgoing()" :key="'out-' + rel.to" class="rel">
+      <li v-for="rel in relations" :key="rel.to" class="rel">
         <div class="rel__ends">
-          <span class="rel__end">Links to</span>
-          <span class="rel__end rel__end--target" :title="rel.to">{{ rel.to }}</span>
+          <button
+            class="rel__dir"
+            title="Change direction"
+            @click="emit('set-direction', rel.to, nextDirection(rel.direction))"
+          >
+            {{ ARROWS[rel.direction] }}
+          </button>
+          <span class="rel__end" :title="rel.to">{{ rel.to }}</span>
           <button class="rel__del" title="Remove relation" @click="emit('remove', rel.to)">
             🗑
           </button>
@@ -73,31 +84,26 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
           </select>
         </div>
       </li>
-
-      <li v-for="rel in incoming()" :key="'in-' + rel.to" class="rel rel--incoming">
-        <div class="rel__ends">
-          <span class="rel__end" title="Created by the other document — edit it there">
-            Linked by
-          </span>
-          <span class="rel__end rel__end--target" :title="rel.to">{{ rel.to }}</span>
-        </div>
-        <div v-if="rel.labels.length" class="rel__labels">
-          <span v-for="l in rel.labels" :key="l" class="chip chip--readonly">{{ l }}</span>
-        </div>
-      </li>
-
       <li v-if="!relations.length" class="rel-list__empty">No document relations yet.</li>
     </ul>
 
-    <select
-      v-if="addable().length"
-      class="doc-relations__add"
-      value=""
-      @change="addRelation(($event.target as HTMLSelectElement).value)"
-    >
-      <option value="">+ link to a document…</option>
-      <option v-for="d in addable()" :key="d.name" :value="d.name">{{ d.name }}</option>
-    </select>
+    <div v-if="addable().length" class="doc-relations__new">
+      <button
+        class="rel__dir"
+        title="Direction for the new relation"
+        @click="pendingDirection = nextDirection(pendingDirection)"
+      >
+        {{ ARROWS[pendingDirection] }}
+      </button>
+      <select
+        class="doc-relations__add"
+        value=""
+        @change="addRelation(($event.target as HTMLSelectElement).value)"
+      >
+        <option value="">+ link to a document…</option>
+        <option v-for="d in addable()" :key="d.name" :value="d.name">{{ d.name }}</option>
+      </select>
+    </div>
   </div>
 </template>
 
@@ -125,9 +131,6 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
 }
-.rel--incoming {
-  background: rgba(0, 0, 0, 0.03);
-}
 .rel__ends {
   display: flex;
   align-items: center;
@@ -136,14 +139,17 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 .rel__end {
   font-weight: 600;
   white-space: nowrap;
-}
-.rel--incoming .rel__end {
-  font-weight: 400;
-  color: var(--lak-muted);
-}
-.rel__end--target {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.rel__dir {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--lak-border);
+  background: transparent;
+  border-radius: 4px;
+  padding: 0 0.4rem;
+  flex-shrink: 0;
 }
 .rel__del {
   margin-left: auto;
@@ -171,9 +177,6 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   padding: 0.05rem 0.5rem;
   font-size: 0.78rem;
 }
-.chip--readonly {
-  color: var(--lak-muted);
-}
 .chip__x {
   background: none;
   border: none;
@@ -190,8 +193,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   background: transparent;
   cursor: pointer;
 }
-.doc-relations__add {
+.doc-relations__new {
   margin-top: 0.6rem;
+  display: flex;
+  gap: 0.4rem;
+}
+.doc-relations__add {
+  flex: 1;
   font: inherit;
   font-size: 0.8rem;
   padding: 0.3rem 0.4rem;
@@ -199,7 +207,6 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
-  width: 100%;
 }
 .rel-list__empty {
   color: var(--lak-muted);
