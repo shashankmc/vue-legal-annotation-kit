@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import type { DocumentAnnotation, Label } from "../types";
 import StarRating from "./StarRating.vue";
 
@@ -25,14 +24,6 @@ defineEmits<{
   "toggle-document-label": [label: Label];
 }>();
 
-const filter = ref("");
-
-const visible = computed(() =>
-  props.labels.filter((l) =>
-    l.name.toLowerCase().includes(filter.value.toLowerCase()),
-  ),
-);
-
 const isDocumentTagged = (label: Label) =>
   props.documentAnnotations.some((d) => d.label === label.name);
 
@@ -53,11 +44,11 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
       <span class="guidelines-link__icon" aria-hidden="true">↗</span>
     </a>
 
-    <input v-model="filter" class="sidebar__filter" type="text" placeholder="Quick Filter" />
+    <hr class="sidebar__divider" />
 
     <ul v-if="!documentLevel" class="labels">
       <li
-        v-for="(label, i) in visible"
+        v-for="(label, i) in labels"
         :key="label.name"
         class="label"
         :class="{ 'is-active': label.name === activeLabel?.name }"
@@ -73,7 +64,7 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
       <h4 class="sidebar__doc-tags-title">Document Tags</h4>
       <ul class="doc-tags">
         <li
-          v-for="label in visible"
+          v-for="label in labels"
           :key="label.name"
           class="doc-tag"
           :class="{ 'is-tagged': isDocumentTagged(label) }"
@@ -128,12 +119,10 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
 .guidelines-link__icon {
   font-size: 0.85rem;
 }
-.sidebar__filter {
-  font: inherit;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--lak-border);
-  border-radius: 6px;
-  margin-bottom: 0.6rem;
+.sidebar__divider {
+  border: none;
+  border-top: 1px solid var(--lak-border);
+  margin: 0 0 0.6rem;
 }
 .labels {
   list-style: none;
