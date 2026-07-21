@@ -39,6 +39,12 @@ const emit = defineEmits<{
   save: [assignment: Assignment];
   next: [assignment: Assignment];
   previous: [assignment: Assignment];
+  // Document relations are mutual — these ask the parent (which owns the
+  // AnnotationSource and can reach other documents) to mirror the edit on
+  // the target document. AnnotatorView only ever sees its own document.
+  "link-document": [toName: string];
+  "unlink-document": [toName: string];
+  "relabel-document-relation": [toName: string, labels: string[]];
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
@@ -75,7 +81,6 @@ const {
   documentRelations,
   addDocumentRelation,
   removeDocumentRelation,
-  setDocumentRelationDirection,
   setDocumentRelationLabels,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
@@ -124,6 +129,23 @@ const setActiveLabel = (label: Label) => {
 // just selects the region.
 const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
+
+// Document relations are mutual: update this document's own side locally, and
+// ask the parent to mirror the change on the target document too.
+const onAddDocumentRelation = (toName: string) => {
+  addDocumentRelation(toName);
+  emit("link-document", toName);
+};
+
+const onRemoveDocumentRelation = (toName: string) => {
+  removeDocumentRelation(toName);
+  emit("unlink-document", toName);
+};
+
+const onSetDocumentRelationLabels = (toName: string, labels: string[]) => {
+  setDocumentRelationLabels(toName, labels);
+  emit("relabel-document-relation", toName, labels);
+};
 
 // Document confidence is assignment-level.
 const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
@@ -302,10 +324,9 @@ onBeforeUnmount(() => {
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
-        @add-document-relation="addDocumentRelation"
-        @remove-document-relation="removeDocumentRelation"
-        @set-document-relation-direction="setDocumentRelationDirection"
-        @set-document-relation-labels="setDocumentRelationLabels"
+        @add-document-relation="onAddDocumentRelation"
+        @remove-document-relation="onRemoveDocumentRelation"
+        @set-document-relation-labels="onSetDocumentRelationLabels"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"
