@@ -8,6 +8,10 @@ const props = defineProps<{
   position: QueuePosition;
   annotationLevel: AnnotationLevel;
   documentName: string;
+  /** Whether there's anything the Save button hasn't captured yet. */
+  unsaved?: boolean;
+  /** Briefly true right after a manual save, for a "Saved ✓" confirmation. */
+  justSaved?: boolean;
 }>();
 
 defineEmits<{ previous: []; save: []; next: [] }>();
@@ -49,7 +53,13 @@ const percent = () =>
       <button class="btn btn--outline" :disabled="isFirst()" @click="$emit('previous')">
         ← Back
       </button>
-      <button class="btn btn--outline" @click="$emit('save')">Save</button>
+      <button
+        class="btn btn--outline"
+        :class="{ 'btn--unsaved': unsaved && !justSaved, 'btn--saved': justSaved }"
+        @click="$emit('save')"
+      >
+        {{ justSaved ? "Saved ✓" : "Save" }}
+      </button>
       <button class="btn btn--primary" @click="$emit('next')">
         {{ isLast() ? "Finish" : "Next →" }}
       </button>
@@ -135,6 +145,7 @@ const percent = () =>
   border-radius: 6px;
   padding: 0.3rem 0.65rem;
   border: 1px solid transparent;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .btn:disabled {
   opacity: 0.5;
@@ -149,5 +160,14 @@ const percent = () =>
 .btn--primary {
   background: var(--lak-accent);
   color: #fff;
+}
+.btn--unsaved {
+  border-color: #d97706;
+  color: #d97706;
+}
+.btn--saved {
+  border-color: var(--lak-success);
+  color: var(--lak-success);
+  background: color-mix(in srgb, var(--lak-success) 14%, transparent);
 }
 </style>

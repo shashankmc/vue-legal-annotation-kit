@@ -191,6 +191,7 @@ const clearLocalState = () => {
 const onSaveClick = () => {
   clearLocalState();
   emit("save", snapshot.value);
+  flashSaved();
 };
 
 const onPrevious = () => {
@@ -222,6 +223,18 @@ const confirmEmptyNext = () => {
 
 const cancelEmptyNext = () => {
   showEmptyDocModal.value = false;
+};
+
+// Brief "Saved ✓" state on the Save button after a manual save, as visual
+// confirmation in place of any dialog.
+const justSaved = ref(false);
+let savedTimer: ReturnType<typeof setTimeout> | undefined;
+const flashSaved = () => {
+  justSaved.value = true;
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => {
+    justSaved.value = false;
+  }, 1400);
 };
 
 // Number keys arm a label: 1–9 for the first nine, 0 for the tenth. Only
@@ -268,6 +281,8 @@ onBeforeUnmount(() => {
       :position="position"
       :annotation-level="annotationLevel"
       :document-name="document.name"
+      :unsaved="hasUnsavedChanges"
+      :just-saved="justSaved"
       @previous="onPrevious"
       @save="onSaveClick"
       @next="onNext"
