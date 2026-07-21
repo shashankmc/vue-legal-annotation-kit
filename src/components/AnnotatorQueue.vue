@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import type { AnnotationSource, DocumentRef } from "../model/source";
-import type { AnnotationLevel, Assignment, DocumentRelationDirection, Labelset } from "../types";
+import { computed, onMounted, ref, watch } from "vue";
+import type { AnnotationSource, DocumentRef, IncomingRelation } from "../model/source";
+import type { AnnotationLevel, Assignment, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
 
@@ -44,6 +44,20 @@ const otherDocuments = computed(() =>
   docRefs.value.filter((d) => d.name !== bundle.value?.document.name),
 );
 
+// Other documents' relations pointing at whichever one is open now — a
+// read-only "Linked by" view, refetched on every navigation since it depends
+// on the current document.
+const incomingRelations = ref<IncomingRelation[]>([]);
+watch(
+  bundle,
+  async (b) => {
+    incomingRelations.value = b
+      ? ((await props.source.listIncomingRelations?.(b.document.name)) ?? [])
+      : [];
+  },
+  { immediate: true },
+);
+
 const onSave = (assignment: Assignment) => save(assignment);
 
 const onPrevious = async (assignment: Assignment) => {
@@ -62,28 +76,6 @@ const onNext = async (assignment: Assignment) => {
   await goTo(position.value + 1);
 };
 
-// Creating a relation on the current document seeds a mirror-image entry
-// (opposite direction) directly on the target document's own record — it
-// isn't open in any editor right now, so there's no live state to update,
-// just plain load+save. This happens once, at creation; after that each side
-// is independent, exactly like any other relation.
-const opposite = (d: DocumentRelationDirection): DocumentRelationDirection =>
-  d === "right" ? "left" : "right";
-
-const onLinkDocument = async (toName: string, direction: DocumentRelationDirection) => {
-  const fromName = bundle.value?.document.name;
-  const docRef = docRefs.value.find((d) => d.name === toName);
-  if (!fromName || !docRef) return;
-  const target = await props.source.load(docRef.order);
-  if (!target.assignment.document_relations.some((r) => r.to === fromName)) {
-    target.assignment.document_relations.push({
-      to: fromName,
-      direction: opposite(direction),
-      labels: [],
-    });
-    await props.source.save(target.assignment);
-  }
-};
 </script>
 
 <template>
@@ -95,12 +87,12 @@ const onLinkDocument = async (toName: string, direction: DocumentRelationDirecti
     :labelset="labelset"
     :annotation-level="annotationLevel"
     :other-documents="otherDocuments"
+    :incoming-relations="incomingRelations"
     :position="queuePosition"
     :guidelines-url="guidelinesUrl"
     @save="onSave"
     @next="onNext"
     @previous="onPrevious"
-    @link-document="onLinkDocument"
   />
   <div v-else-if="loading" class="lak-queue-status">Loading…</div>
   <div v-else-if="error" class="lak-queue-status lak-queue-status--error">
