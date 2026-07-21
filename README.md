@@ -182,22 +182,27 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `labels` | array of string | One or more relation labels (e.g. `["Has a"]`). |
 
 ### `documents[].assignments[].document_relations[]`
-Relations between whole documents (document-level tasks). Like span relations,
-each entry is oriented — but only `left`/`right`, no `bi`. The annotator picks
-the direction when creating a relation; that single action seeds a mirror-image
-entry (opposite direction) on the target document too, so both sides show it
-immediately as a normal relation — same styling, fully editable, count included
-— exactly as if that document's own annotator had created it themselves. After
-that one-time seeding, each side is independent: editing or deleting on one
-document never touches the other's copy. Populating the target picker needs the
+Relations between whole documents (document-level tasks). Always one-directional
+— "this document links to the target" — and stored **only** on the document
+that created it; nothing is ever written to the target. That keeps
+counting/processing relations after annotation simple: every relation exists
+exactly once, no de-duplication needed. Populating the target picker needs the
 optional `AnnotationSource.listDocuments()` (lightweight name/order refs);
 without it the UI hides.
 
 | Field | Type | Notes |
 |---|---|---|
 | `to` | string | **`name` of the target document** it relates to. |
-| `direction` | string | `right` (this document points at the target — "Links to") \| `left` (the target points at this document — "Linked by"). |
 | `labels` | array of string | Relation labels, same vocabulary as span relations. |
+
+**"Linked by" (not part of the stored format).** The UI also shows, read-only,
+which other documents point at the one currently open — so an annotator who
+reaches document B can see "linked by A" and remember the connection A's
+annotator made. This is computed on the fly, not real data of B's own: it comes
+from the optional `AnnotationSource.listIncomingRelations(name)`, which returns
+other documents' relations targeting `name`. Editing that relation still has to
+happen on A — B has no stored copy to edit. Hosts that omit this method simply
+don't get a "Linked by" section.
 
 ### `counts`
 Derived/denormalized summary — recompute rather than trust blindly:
