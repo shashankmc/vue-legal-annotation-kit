@@ -15,6 +15,7 @@ const props = defineProps<{
   documentAnnotations: DocumentAnnotation[];
   /** Confidence only applies once a span or document tag is selected. */
   hasSelection?: boolean;
+  guidelinesUrl?: string;
 }>();
 
 defineEmits<{
@@ -41,6 +42,17 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
 
 <template>
   <aside class="sidebar">
+    <a
+      v-if="guidelinesUrl"
+      class="guidelines-link"
+      :href="guidelinesUrl"
+      target="_blank"
+      rel="noopener"
+    >
+      See Annotation Guidelines
+      <span class="guidelines-link__icon" aria-hidden="true">↗</span>
+    </a>
+
     <input v-model="filter" class="sidebar__filter" type="text" placeholder="Quick Filter" />
 
     <ul v-if="!documentLevel" class="labels">
@@ -100,6 +112,21 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
   background: var(--lak-sidebar-bg);
   padding: 0.5rem;
   overflow-y: auto;
+}
+.guidelines-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--lak-accent);
+  text-decoration: none;
+  margin-bottom: 0.6rem;
+}
+.guidelines-link:hover {
+  text-decoration: underline;
+}
+.guidelines-link__icon {
+  font-size: 0.85rem;
 }
 .sidebar__filter {
   font: inherit;
