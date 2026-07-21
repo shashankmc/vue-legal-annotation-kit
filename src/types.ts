@@ -71,13 +71,18 @@ export interface DocumentAnnotation {
   confidence: number;
 }
 
-/** A relation from the whole current document to another whole document.
- * The "from" is the assignment's own document; `to` names the target. Edges
- * are stored once, on the source document's assignment. */
+/** No "bi" — a document relation is always attributed to whoever created it. */
+export type DocumentRelationDirection = "outgoing" | "incoming";
+
+/** A relation between two whole documents. Creating "A links to B" (an
+ * `outgoing` entry on A) automatically adds an `incoming` entry on B — a
+ * read-only backlink so B's annotator can see they're pointed at, without
+ * that counting as B itself linking back. A genuine two-way pair only exists
+ * if B's annotator separately creates their own `outgoing` entry to A. */
 export interface DocumentRelation {
   /** Target document's `name`. */
   to: string;
-  direction: RelationDirection;
+  direction: DocumentRelationDirection;
   labels: string[];
 }
 
