@@ -3,6 +3,7 @@ import type {
   Annotation,
   DocumentAnnotation,
   DocumentRelation,
+  DocumentRelationDirection,
   RelationDirection,
 } from "../types";
 import type { DocumentRef } from "../model/source";
@@ -28,8 +29,9 @@ const emit = defineEmits<{
   remove: [id: number];
   "select-document-annotation": [id: number];
   "remove-document-annotation": [id: number];
-  "add-document-relation": [toName: string];
+  "add-document-relation": [toName: string, direction: DocumentRelationDirection];
   "remove-document-relation": [toName: string];
+  "set-document-relation-direction": [toName: string, direction: DocumentRelationDirection];
   "set-document-relation-labels": [toName: string, labels: string[]];
   link: [id: number];
   "remove-relation": [from: number, to: number];
@@ -68,8 +70,9 @@ const emit = defineEmits<{
         v-if="otherDocuments.length || documentRelations.length"
         :relations="documentRelations"
         :other-documents="otherDocuments"
-        @add="emit('add-document-relation', $event)"
+        @add="(to, dir) => emit('add-document-relation', to, dir)"
         @remove="emit('remove-document-relation', $event)"
+        @set-direction="(to, dir) => emit('set-document-relation-direction', to, dir)"
         @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
       />
     </template>
