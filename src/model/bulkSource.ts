@@ -1,5 +1,5 @@
 import type { TaskData } from "../types";
-import type { AnnotationSource, AssignmentBundle } from "./source";
+import type { AnnotationSource, AssignmentBundle, IncomingRelation } from "./source";
 import { flattenAssignments } from "./source";
 
 /**
@@ -42,6 +42,15 @@ export function createBulkSource(
         name: b.document.name,
         order: b.assignment.order,
       }));
+    },
+    listIncomingRelations(toName) {
+      const incoming: IncomingRelation[] = [];
+      for (const b of bundles) {
+        for (const r of b.assignment.document_relations) {
+          if (r.to === toName) incoming.push({ from: b.document.name, labels: r.labels });
+        }
+      }
+      return incoming;
     },
     finish() {
       console.log(JSON.parse(localStorage.getItem(storageKey) ?? "null"));
