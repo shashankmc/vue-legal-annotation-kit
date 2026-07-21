@@ -14,6 +14,7 @@ import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
 import DocumentTextView from "./DocumentTextView.vue";
 import InspectorPane from "./InspectorPane.vue";
+import ConfirmModal from "./ConfirmModal.vue";
 import { useAnnotator } from "../model/useAnnotator";
 import { snapToLevel } from "../model/spans";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
@@ -197,18 +198,30 @@ const onPrevious = () => {
   emit("previous", snapshot.value);
 };
 
-const onNext = () => {
-  // Advancing marks the document done — warn if nothing was annotated.
-  if (
-    !hasAnnotations.value &&
-    !window.confirm(
-      "No annotations were made in this document.\nAre you sure you want to continue?",
-    )
-  ) {
-    return;
-  }
+// Advancing marks the document done — gate on a genuinely empty document
+// with the HTML modal instead of window.confirm.
+const showEmptyDocModal = ref(false);
+
+const advanceNext = () => {
   clearLocalState();
   emit("next", snapshot.value);
+};
+
+const onNext = () => {
+  if (!hasAnnotations.value) {
+    showEmptyDocModal.value = true;
+    return;
+  }
+  advanceNext();
+};
+
+const confirmEmptyNext = () => {
+  showEmptyDocModal.value = false;
+  advanceNext();
+};
+
+const cancelEmptyNext = () => {
+  showEmptyDocModal.value = false;
 };
 
 // Number keys arm a label: 1–9 for the first nine, 0 for the tenth. Only
@@ -309,6 +322,16 @@ onBeforeUnmount(() => {
         @set-relation-labels="setRelationLabels"
       />
     </div>
+
+    <ConfirmModal
+      v-if="showEmptyDocModal"
+      title="No annotations yet"
+      :message="'No annotations were made in this document.\nAre you sure you want to continue?'"
+      confirm-label="Continue"
+      cancel-label="Cancel"
+      @confirm="confirmEmptyNext"
+      @cancel="cancelEmptyNext"
+    />
   </div>
 </template>
 
