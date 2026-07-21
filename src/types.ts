@@ -71,19 +71,15 @@ export interface DocumentAnnotation {
   confidence: number;
 }
 
-/** No "bi" — a document relation is always oriented one way or the other. */
-export type DocumentRelationDirection = "right" | "left";
-
-/** A relation between two whole documents. `right` means this document points
- * at the target ("Links to"); `left` means the target points at this document
- * ("Linked by"). Creating one seeds the mirror-image entry (opposite
- * direction) on the target document too — from then on each side is a
- * normal, independent, fully editable relation, exactly as if that
- * document's own annotator had created it themselves. */
+/** A relation from this document to another — always "this document links to
+ * the target", stored **only** on the document that created it. Nothing gets
+ * written to the target: on its own document, the "Linked by" list is a
+ * read-only view computed from other documents' relations, not real data of
+ * its own. Keeps counting/processing relations after annotation simple —
+ * every relation exists exactly once, no de-duplication needed. */
 export interface DocumentRelation {
   /** Target document's `name`. */
   to: string;
-  direction: DocumentRelationDirection;
   labels: string[];
 }
 
