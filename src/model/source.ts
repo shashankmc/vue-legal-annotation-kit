@@ -13,6 +13,14 @@ export interface DocumentRef {
   order: number;
 }
 
+/** One other document's relation pointing at the document being asked about —
+ * for the read-only "Linked by" display, not stored anywhere itself. */
+export interface IncomingRelation {
+  /** Name of the document that created the relation. */
+  from: string;
+  labels: string[];
+}
+
 /**
  * The host's data-access contract. The package only ever asks for "the
  * assignment at this position" and "persist this assignment" — whether that
@@ -34,6 +42,13 @@ export interface AnnotationSource {
    * won't surface the document-relations UI.
    */
   listDocuments?(): Promise<DocumentRef[]> | DocumentRef[];
+  /**
+   * List other documents whose own `document_relations` point at `toName` —
+   * purely for the read-only "Linked by" display; nothing is written to
+   * `toName`'s own assignment for these. Optional: hosts that omit it simply
+   * won't show a "Linked by" section.
+   */
+  listIncomingRelations?(toName: string): Promise<IncomingRelation[]> | IncomingRelation[];
   /**
    * Called once the annotator advances past the last document. Optional —
    * sources that buffer locally (e.g. an offline cache) can use this to flush
