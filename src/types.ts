@@ -71,14 +71,15 @@ export interface DocumentAnnotation {
   confidence: number;
 }
 
-/** No "bi" — a document relation is always attributed to whoever created it. */
-export type DocumentRelationDirection = "outgoing" | "incoming";
+/** No "bi" — a document relation is always oriented one way or the other. */
+export type DocumentRelationDirection = "right" | "left";
 
-/** A relation between two whole documents. Creating "A links to B" (an
- * `outgoing` entry on A) automatically adds an `incoming` entry on B — a
- * read-only backlink so B's annotator can see they're pointed at, without
- * that counting as B itself linking back. A genuine two-way pair only exists
- * if B's annotator separately creates their own `outgoing` entry to A. */
+/** A relation between two whole documents. `right` means this document points
+ * at the target ("Links to"); `left` means the target points at this document
+ * ("Linked by"). Creating one seeds the mirror-image entry (opposite
+ * direction) on the target document too — from then on each side is a
+ * normal, independent, fully editable relation, exactly as if that
+ * document's own annotator had created it themselves. */
 export interface DocumentRelation {
   /** Target document's `name`. */
   to: string;
