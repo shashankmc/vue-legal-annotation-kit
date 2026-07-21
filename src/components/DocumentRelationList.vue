@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import type { DocumentRelation, RelationDirection } from "../types";
+import type { DocumentRelation } from "../types";
 import type { DocumentRef } from "../model/source";
 import { RELATION_LABELS } from "../types";
 
-// Document-level counterpart to RelationList: the current document's outgoing
+// Document-level counterpart to RelationList: the current document's
 // relations to other whole documents. Keyed by target document name (no
-// annotation ids, no colours). Add a relation by picking a target from the
-// queue; edit direction/labels or remove per row.
+// annotation ids, no colours). Split into what this document explicitly
+// links to (editable) and what links to it (an auto-mirrored, read-only
+// backlink — editing that requires going to the other document).
 const props = defineProps<{
   relations: DocumentRelation[];
   /** Queue documents this one may point at, minus itself. */
@@ -16,24 +17,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   add: [toName: string];
   remove: [toName: string];
-  "set-direction": [toName: string, direction: RelationDirection];
   "set-labels": [toName: string, labels: string[]];
 }>();
 
-const ARROWS: Record<RelationDirection, string> = {
-  right: "→",
-  left: "←",
-  bi: "↔",
-};
-const nextDirection = (d: RelationDirection): RelationDirection =>
-  d === "right" ? "left" : d === "left" ? "bi" : "right";
+const outgoing = () => props.relations.filter((r) => r.direction === "outgoing");
+const incoming = () => props.relations.filter((r) => r.direction === "incoming");
 
 const available = (labels: string[]) =>
   RELATION_LABELS.filter((l) => !labels.includes(l));
 
-// Only documents not already related to can be added as a new target.
+// A document already linked to (outgoing) can't be picked again — but one
+// that merely links to this document (incoming only) still can, since that's
+// how a real two-way pair gets made: each side creates its own outgoing link.
 const addable = () => {
-  const taken = new Set(props.relations.map((r) => r.to));
+  const taken = new Set(outgoing().map((r) => r.to));
   return props.otherDocuments.filter((d) => !taken.has(d.name));
 };
 
@@ -52,16 +49,9 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
     <h4 class="doc-relations__title">Document Relations ({{ relations.length }})</h4>
 
     <ul class="rel-list">
-      <li v-for="rel in relations" :key="rel.to" class="rel">
+      <li v-for="rel in outgoing()" :key="'out-' + rel.to" class="rel">
         <div class="rel__ends">
-          <span class="rel__end">This document</span>
-          <button
-            class="rel__dir"
-            title="Change direction"
-            @click="emit('set-direction', rel.to, nextDirection(rel.direction))"
-          >
-            {{ ARROWS[rel.direction] }}
-          </button>
+          <span class="rel__end">Links to</span>
           <span class="rel__end rel__end--target" :title="rel.to">{{ rel.to }}</span>
           <button class="rel__del" title="Remove relation" @click="emit('remove', rel.to)">
             🗑
@@ -83,6 +73,19 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
           </select>
         </div>
       </li>
+
+      <li v-for="rel in incoming()" :key="'in-' + rel.to" class="rel rel--incoming">
+        <div class="rel__ends">
+          <span class="rel__end" title="Created by the other document — edit it there">
+            Linked by
+          </span>
+          <span class="rel__end rel__end--target" :title="rel.to">{{ rel.to }}</span>
+        </div>
+        <div v-if="rel.labels.length" class="rel__labels">
+          <span v-for="l in rel.labels" :key="l" class="chip chip--readonly">{{ l }}</span>
+        </div>
+      </li>
+
       <li v-if="!relations.length" class="rel-list__empty">No document relations yet.</li>
     </ul>
 
@@ -92,7 +95,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
       value=""
       @change="addRelation(($event.target as HTMLSelectElement).value)"
     >
-      <option value="">+ relate to a document…</option>
+      <option value="">+ link to a document…</option>
       <option v-for="d in addable()" :key="d.name" :value="d.name">{{ d.name }}</option>
     </select>
   </div>
@@ -122,6 +125,9 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
 }
+.rel--incoming {
+  background: rgba(0, 0, 0, 0.03);
+}
 .rel__ends {
   display: flex;
   align-items: center;
@@ -131,18 +137,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   font-weight: 600;
   white-space: nowrap;
 }
+.rel--incoming .rel__end {
+  font-weight: 400;
+  color: var(--lak-muted);
+}
 .rel__end--target {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.rel__dir {
-  font: inherit;
-  cursor: pointer;
-  border: 1px solid var(--lak-border);
-  background: transparent;
-  border-radius: 4px;
-  padding: 0 0.4rem;
-  flex-shrink: 0;
 }
 .rel__del {
   margin-left: auto;
@@ -169,6 +170,9 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
   font-size: 0.78rem;
+}
+.chip--readonly {
+  color: var(--lak-muted);
 }
 .chip__x {
   background: none;
