@@ -3,7 +3,6 @@ import type {
   Annotation,
   DocumentAnnotation,
   DocumentRelation,
-  DocumentRelationDirection,
   Label,
   RelationDirection,
 } from "../types";
@@ -94,30 +93,21 @@ export function useAnnotator(
   }
 
   // --- Document-to-document relations (keyed by target document name, one
-  // entry per target) --------------------------------------------------------
+  // entry per target). Always "this document links to the target" — stored
+  // only here, never on the target. --------------------------------------
   const findDocRelation = (toName: string) =>
     documentRelations.value.find((r) => r.to === toName);
 
-  /** Point the current document at another (no duplicate targets). Seeding
-   * the mirror-image entry on the target document is the caller's job —
-   * useAnnotator only has this one document's state. */
-  function addDocumentRelation(toName: string, direction: DocumentRelationDirection) {
+  /** Point the current document at another (no duplicate targets). */
+  function addDocumentRelation(toName: string) {
     if (!toName || findDocRelation(toName)) return;
-    documentRelations.value.push({ to: toName, direction, labels: [] });
+    documentRelations.value.push({ to: toName, labels: [] });
     dirty.value = true;
   }
 
   function removeDocumentRelation(toName: string) {
     documentRelations.value = documentRelations.value.filter((r) => r.to !== toName);
     dirty.value = true;
-  }
-
-  function setDocumentRelationDirection(toName: string, direction: DocumentRelationDirection) {
-    const rel = findDocRelation(toName);
-    if (rel) {
-      rel.direction = direction;
-      dirty.value = true;
-    }
   }
 
   function setDocumentRelationLabels(toName: string, labels: string[]) {
@@ -224,7 +214,6 @@ export function useAnnotator(
     selectDocumentAnnotation,
     addDocumentRelation,
     removeDocumentRelation,
-    setDocumentRelationDirection,
     setDocumentRelationLabels,
   };
 }
