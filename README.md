@@ -182,16 +182,19 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `labels` | array of string | One or more relation labels (e.g. `["Has a"]`). |
 
 ### `documents[].assignments[].document_relations[]`
-Relations between whole documents (document-level tasks). The owning assignment's
-document is the implicit "from"; each edge is stored **once**, on that source
-document — a document is not told which others point at it (a future graph view may
-surface the full picture). Populating the target picker needs the optional
-`AnnotationSource.listDocuments()` (lightweight name/order refs); without it the UI hides.
+Relations between whole documents (document-level tasks). No `left`/`right`/`bi`
+cycling like span relations — instead each entry is attributed to whoever
+created it. Creating "A links to B" adds an `outgoing` entry on A **and**
+auto-adds a read-only `incoming` backlink on B, so B's annotator can see they're
+pointed at without that counting as B linking back. A genuine two-way pair only
+exists if B's annotator separately creates their own `outgoing` entry to A.
+Populating the target picker needs the optional `AnnotationSource.listDocuments()`
+(lightweight name/order refs); without it the UI hides.
 
 | Field | Type | Notes |
 |---|---|---|
 | `to` | string | **`name` of the target document** it relates to. |
-| `direction` | string | `left` \| `right` \| `bi`. |
+| `direction` | string | `outgoing` (this document created it) \| `incoming` (auto-mirrored backlink; read-only from this side). |
 | `labels` | array of string | Relation labels, same vocabulary as span relations. |
 
 ### `counts`
