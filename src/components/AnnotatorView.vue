@@ -4,6 +4,7 @@ import type {
   AnnotationDocument,
   AnnotationLevel,
   Assignment,
+  DocumentRelationDirection,
   Label,
   Labelset,
   QueuePosition,
@@ -39,12 +40,11 @@ const emit = defineEmits<{
   save: [assignment: Assignment];
   next: [assignment: Assignment];
   previous: [assignment: Assignment];
-  // Document relations are mutual — these ask the parent (which owns the
-  // AnnotationSource and can reach other documents) to mirror the edit on
-  // the target document. AnnotatorView only ever sees its own document.
-  "link-document": [toName: string];
-  "unlink-document": [toName: string];
-  "relabel-document-relation": [toName: string, labels: string[]];
+  // Fired once, at creation: asks the parent (which owns the AnnotationSource
+  // and can reach other documents) to seed the mirror-image entry on the
+  // target document. Everything after that (edit, delete, re-toggle) is
+  // purely local — AnnotatorView only ever sees its own document.
+  "link-document": [toName: string, direction: DocumentRelationDirection];
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
@@ -81,6 +81,7 @@ const {
   documentRelations,
   addDocumentRelation,
   removeDocumentRelation,
+  setDocumentRelationDirection,
   setDocumentRelationLabels,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
@@ -130,21 +131,12 @@ const setActiveLabel = (label: Label) => {
 const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
 
-// Document relations are mutual: update this document's own side locally, and
-// ask the parent to mirror the change on the target document too.
-const onAddDocumentRelation = (toName: string) => {
-  addDocumentRelation(toName);
-  emit("link-document", toName);
-};
-
-const onRemoveDocumentRelation = (toName: string) => {
-  removeDocumentRelation(toName);
-  emit("unlink-document", toName);
-};
-
-const onSetDocumentRelationLabels = (toName: string, labels: string[]) => {
-  setDocumentRelationLabels(toName, labels);
-  emit("relabel-document-relation", toName, labels);
+// Creating a document relation also seeds its mirror on the target document —
+// everything after that (remove/re-toggle/relabel) is purely local, handled
+// directly by useAnnotator with no further propagation.
+const onAddDocumentRelation = (toName: string, direction: DocumentRelationDirection) => {
+  addDocumentRelation(toName, direction);
+  emit("link-document", toName, direction);
 };
 
 // Document confidence is assignment-level.
@@ -325,8 +317,9 @@ onBeforeUnmount(() => {
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
         @add-document-relation="onAddDocumentRelation"
-        @remove-document-relation="onRemoveDocumentRelation"
-        @set-document-relation-labels="onSetDocumentRelationLabels"
+        @remove-document-relation="removeDocumentRelation"
+        @set-document-relation-direction="setDocumentRelationDirection"
+        @set-document-relation-labels="setDocumentRelationLabels"
         @link="startLinking"
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"
