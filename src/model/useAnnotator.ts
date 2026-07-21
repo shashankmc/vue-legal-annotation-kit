@@ -3,6 +3,7 @@ import type {
   Annotation,
   DocumentAnnotation,
   DocumentRelation,
+  DocumentRelationDirection,
   Label,
   RelationDirection,
 } from "../types";
@@ -92,32 +93,35 @@ export function useAnnotator(
     }
   }
 
-  // --- Document-to-document relations (keyed by target document name) --------
-  // Only ever operates on this document's own `outgoing` entries — `incoming`
-  // ones are backlinks the target document created, auto-mirrored here by the
-  // caller (AnnotatorQueue); they're read-only from this side.
-  const findOutgoing = (toName: string) =>
-    documentRelations.value.find((r) => r.to === toName && r.direction === "outgoing");
+  // --- Document-to-document relations (keyed by target document name, one
+  // entry per target) --------------------------------------------------------
+  const findDocRelation = (toName: string) =>
+    documentRelations.value.find((r) => r.to === toName);
 
-  /** Point the current document at another (no duplicate outgoing targets —
-   * an existing incoming backlink from that document doesn't block this). The
-   * reciprocal incoming edge on the target document is the caller's job —
+  /** Point the current document at another (no duplicate targets). Seeding
+   * the mirror-image entry on the target document is the caller's job —
    * useAnnotator only has this one document's state. */
-  function addDocumentRelation(toName: string) {
-    if (!toName || findOutgoing(toName)) return;
-    documentRelations.value.push({ to: toName, direction: "outgoing", labels: [] });
+  function addDocumentRelation(toName: string, direction: DocumentRelationDirection) {
+    if (!toName || findDocRelation(toName)) return;
+    documentRelations.value.push({ to: toName, direction, labels: [] });
     dirty.value = true;
   }
 
   function removeDocumentRelation(toName: string) {
-    documentRelations.value = documentRelations.value.filter(
-      (r) => !(r.to === toName && r.direction === "outgoing"),
-    );
+    documentRelations.value = documentRelations.value.filter((r) => r.to !== toName);
     dirty.value = true;
   }
 
+  function setDocumentRelationDirection(toName: string, direction: DocumentRelationDirection) {
+    const rel = findDocRelation(toName);
+    if (rel) {
+      rel.direction = direction;
+      dirty.value = true;
+    }
+  }
+
   function setDocumentRelationLabels(toName: string, labels: string[]) {
-    const rel = findOutgoing(toName);
+    const rel = findDocRelation(toName);
     if (rel) {
       rel.labels = labels;
       dirty.value = true;
@@ -220,6 +224,7 @@ export function useAnnotator(
     selectDocumentAnnotation,
     addDocumentRelation,
     removeDocumentRelation,
+    setDocumentRelationDirection,
     setDocumentRelationLabels,
   };
 }
