@@ -21,10 +21,34 @@ const emit = defineEmits<{
   complete: [];
 }>();
 
+// The current position round-trips through the URL's `seq` query param, so a
+// reload or a shared link resumes at the same document — takes priority over
+// startPosition, which only matters on a first visit with no `seq` yet.
+const SEQ_PARAM = "seq";
+
+function readSeqFromUrl(): number | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get(SEQ_PARAM);
+  const n = raw ? Number(raw) : NaN;
+  return Number.isInteger(n) && n >= 1 ? n : null;
+}
+
+function writeSeqToUrl(pos: number) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  url.searchParams.set(SEQ_PARAM, String(pos));
+  window.history.replaceState(window.history.state, "", url);
+}
+
+const clampPosition = (n: number) => Math.min(Math.max(n, 1), props.source.total || 1);
+const initialPosition = clampPosition(readSeqFromUrl() ?? props.startPosition ?? 1);
+
 const { position, total, bundle, loading, error, goTo, save } = useAssignmentQueue(
   props.source,
-  props.startPosition ?? 1,
+  initialPosition,
 );
+
+watch(position, (pos) => writeSeqToUrl(pos), { immediate: true });
 
 // The queue's document names, for the document-relation target picker. Fetched
 // once — names/order are stable for the session. Left empty if the source
