@@ -4,12 +4,11 @@ import type {
   AnnotationDocument,
   AnnotationLevel,
   Assignment,
-  DocumentRelationDirection,
   Label,
   Labelset,
   QueuePosition,
 } from "../types";
-import type { DocumentRef } from "../model/source";
+import type { DocumentRef, IncomingRelation } from "../model/source";
 import AnnotatorHeader from "./AnnotatorHeader.vue";
 import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
@@ -29,6 +28,8 @@ const props = defineProps<{
   position: QueuePosition;
   /** Other queue documents this one can point at (document-relation targets). */
   otherDocuments?: DocumentRef[];
+  /** Other documents' relations pointing at this one — read-only display. */
+  incomingRelations?: IncomingRelation[];
   guidelinesUrl?: string;
 }>();
 
@@ -40,11 +41,6 @@ const emit = defineEmits<{
   save: [assignment: Assignment];
   next: [assignment: Assignment];
   previous: [assignment: Assignment];
-  // Fired once, at creation: asks the parent (which owns the AnnotationSource
-  // and can reach other documents) to seed the mirror-image entry on the
-  // target document. Everything after that (edit, delete, re-toggle) is
-  // purely local — AnnotatorView only ever sees its own document.
-  "link-document": [toName: string, direction: DocumentRelationDirection];
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
@@ -81,7 +77,6 @@ const {
   documentRelations,
   addDocumentRelation,
   removeDocumentRelation,
-  setDocumentRelationDirection,
   setDocumentRelationLabels,
 } = useAnnotator(
   existingDraft?.annotations ?? props.assignment.annotations,
@@ -130,14 +125,6 @@ const setActiveLabel = (label: Label) => {
 // just selects the region.
 const onActivate = (id: number) =>
   linkingFrom.value !== null ? linkTo(id) : select(id);
-
-// Creating a document relation also seeds its mirror on the target document —
-// everything after that (remove/re-toggle/relabel) is purely local, handled
-// directly by useAnnotator with no further propagation.
-const onAddDocumentRelation = (toName: string, direction: DocumentRelationDirection) => {
-  addDocumentRelation(toName, direction);
-  emit("link-document", toName, direction);
-};
 
 // Document confidence is assignment-level.
 const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
@@ -308,6 +295,7 @@ onBeforeUnmount(() => {
         :annotations="annotations"
         :document-annotations="documentAnnotations"
         :document-relations="documentRelations"
+        :incoming-relations="incomingRelations ?? []"
         :other-documents="otherDocuments ?? []"
         :colors="labelColors"
         :selected-id="selectedId"
@@ -317,9 +305,8 @@ onBeforeUnmount(() => {
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
-        @add-document-relation="onAddDocumentRelation"
+        @add-document-relation="addDocumentRelation"
         @remove-document-relation="removeDocumentRelation"
-        @set-document-relation-direction="setDocumentRelationDirection"
         @set-document-relation-labels="setDocumentRelationLabels"
         @link="startLinking"
         @remove-relation="removeRelation"
