@@ -201,8 +201,11 @@ const onPrevious = () => {
 };
 
 // Advancing marks the document done — gate on a genuinely empty document
-// with the HTML modal instead of window.confirm.
+// with the HTML modal instead of window.confirm. Only the first time
+// (assignment still "pending"): once it's already "done" the annotator has
+// already seen and accepted this, so re-visiting shouldn't nag again.
 const showEmptyDocModal = ref(false);
+const wasPending = props.assignment.status !== "done";
 
 const advanceNext = () => {
   clearLocalState();
@@ -210,7 +213,7 @@ const advanceNext = () => {
 };
 
 const onNext = () => {
-  if (!hasAnnotations.value) {
+  if (wasPending && !hasAnnotations.value) {
     showEmptyDocModal.value = true;
     return;
   }
