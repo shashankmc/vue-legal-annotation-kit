@@ -185,25 +185,19 @@ const clearLocalState = () => {
   savedConfidence.value = documentConfidence.value;
 };
 
-// Back/Next move away from this document — confirm first if there's anything
-// not yet handed off to a save (Save itself needs no such prompt).
-const confirmUnsavedChanges = () =>
-  !hasUnsavedChanges.value ||
-  window.confirm("You have unsaved changes in this document.\nAre you sure you want to continue?");
-
+// Back/Next never lose work — they always save first, so there's nothing to
+// confirm on the way out.
 const onSaveClick = () => {
   clearLocalState();
   emit("save", snapshot.value);
 };
 
 const onPrevious = () => {
-  if (!confirmUnsavedChanges()) return;
   clearLocalState();
   emit("previous", snapshot.value);
 };
 
 const onNext = () => {
-  if (!confirmUnsavedChanges()) return;
   // Advancing marks the document done — warn if nothing was annotated.
   if (
     !hasAnnotations.value &&
@@ -250,6 +244,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener("beforeunload", warnIfUnsaved);
   window.removeEventListener("keydown", onKey);
+  clearTimeout(savedTimer);
 });
 </script>
 
