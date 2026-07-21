@@ -1,12 +1,6 @@
 <script setup lang="ts">
-import type {
-  Annotation,
-  DocumentAnnotation,
-  DocumentRelation,
-  DocumentRelationDirection,
-  RelationDirection,
-} from "../types";
-import type { DocumentRef } from "../model/source";
+import type { Annotation, DocumentAnnotation, DocumentRelation, RelationDirection } from "../types";
+import type { DocumentRef, IncomingRelation } from "../model/source";
 import RelationList from "./RelationList.vue";
 import DocumentRelationList from "./DocumentRelationList.vue";
 
@@ -17,6 +11,7 @@ defineProps<{
   annotations: Annotation[];
   documentAnnotations: DocumentAnnotation[];
   documentRelations: DocumentRelation[];
+  incomingRelations: IncomingRelation[];
   otherDocuments: DocumentRef[];
   colors: Record<string, string>;
   selectedId: number | null;
@@ -29,9 +24,8 @@ const emit = defineEmits<{
   remove: [id: number];
   "select-document-annotation": [id: number];
   "remove-document-annotation": [id: number];
-  "add-document-relation": [toName: string, direction: DocumentRelationDirection];
+  "add-document-relation": [toName: string];
   "remove-document-relation": [toName: string];
-  "set-document-relation-direction": [toName: string, direction: DocumentRelationDirection];
   "set-document-relation-labels": [toName: string, labels: string[]];
   link: [id: number];
   "remove-relation": [from: number, to: number];
@@ -67,12 +61,12 @@ const emit = defineEmits<{
       </ul>
 
       <DocumentRelationList
-        v-if="otherDocuments.length || documentRelations.length"
+        v-if="otherDocuments.length || documentRelations.length || incomingRelations.length"
         :relations="documentRelations"
+        :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"
-        @add="(to, dir) => emit('add-document-relation', to, dir)"
+        @add="emit('add-document-relation', $event)"
         @remove="emit('remove-document-relation', $event)"
-        @set-direction="(to, dir) => emit('set-document-relation-direction', to, dir)"
         @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
       />
     </template>
