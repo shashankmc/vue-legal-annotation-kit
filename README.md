@@ -245,6 +245,32 @@ _(`to: 2` points at the annotation whose `id` is `2`.)_
 - **Emit, don't own side effects.** Save/next/back are surfaced as events/callbacks
   the host wires up; the package doesn't assume a backend.
 
+### Data sources
+
+`<AnnotatorQueue>` takes an `AnnotationSource` ([source.ts](src/model/source.ts)) —
+the package never talks to a backend directly. Two factories ship:
+
+- **`createBulkSource(task, annotatorId)`** — everything already loaded in memory
+  (host has no backend, or bulk-fetched the whole task upfront). Mirrors to
+  `localStorage` so work survives a refresh.
+- **`createLazySource(delegate)`** — one network call per document, for a real
+  backend. `delegate` is a small set of async functions (`total`, `load`, `save`,
+  plus the same optional `listDocuments`/`listIncomingRelations`/`finish` as
+  `AnnotationSource`) that the host implements against its own backend, e.g.:
+
+  ```ts
+  const source = await createLazySource({
+    total: () => api.countAssignments(annotatorId),
+    load: (position) => api.getAssignment(annotatorId, position),
+    save: (assignment) => api.saveAssignment(assignment),
+  });
+  ```
+
+  `createLazySource` is `async` — it resolves `total` once before returning, since
+  `AnnotatorQueue` reads it synchronously at setup. **Authorization belongs in the
+  delegate/backend** (e.g. Supabase Row Level Security scoped to the authenticated
+  user), not in this package — it only ever calls whatever `delegate` it's given.
+
 ---
 
 ## 6. Distribution
