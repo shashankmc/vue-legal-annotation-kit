@@ -103,29 +103,51 @@ const onNext = async (assignment: Assignment) => {
 </script>
 
 <template>
-  <AnnotatorView
-    v-if="bundle"
-    :key="position"
-    :document="bundle.document"
-    :assignment="bundle.assignment"
-    :labelset="labelset"
-    :annotation-level="annotationLevel"
-    :other-documents="otherDocuments"
-    :incoming-relations="incomingRelations"
-    :position="queuePosition"
-    :guidelines-url="guidelinesUrl"
-    @save="onSave"
-    @next="onNext"
-    @previous="onPrevious"
-  />
-  <div v-else-if="loading" class="lak-queue-status">Loading…</div>
-  <div v-else-if="error" class="lak-queue-status lak-queue-status--error">
-    Could not load this document.
+  <div class="lak-queue">
+    <AnnotatorView
+      v-if="bundle"
+      :key="position"
+      :document="bundle.document"
+      :assignment="bundle.assignment"
+      :labelset="labelset"
+      :annotation-level="annotationLevel"
+      :other-documents="otherDocuments"
+      :incoming-relations="incomingRelations"
+      :position="queuePosition"
+      :guidelines-url="guidelinesUrl"
+      @save="onSave"
+      @next="onNext"
+      @previous="onPrevious"
+    />
+    <div v-else-if="loading" class="lak-queue-status">
+      <span class="lak-spinner" aria-hidden="true" />
+      Loading…
+    </div>
+    <div v-else-if="error" class="lak-queue-status lak-queue-status--error">
+      Could not load this document.
+    </div>
+
+    <!-- goTo doesn't clear `bundle` while a later document loads, so the
+         previous one stays on screen — this overlay is the only sign a lazy
+         source's load/save is in flight, and blocks stale interaction with
+         the document underneath until it resolves. -->
+    <div v-if="bundle && loading" class="lak-queue-overlay" role="status" aria-live="polite">
+      <span class="lak-spinner" aria-hidden="true" />
+      Loading…
+    </div>
   </div>
 </template>
 
 <style scoped>
+.lak-queue {
+  position: relative;
+  height: 100%;
+}
 .lak-queue-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   padding: 2rem;
   text-align: center;
   color: #6b7280;
@@ -133,5 +155,30 @@ const onNext = async (assignment: Assignment) => {
 }
 .lak-queue-status--error {
   color: #dc2626;
+}
+.lak-queue-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.7);
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: #374151;
+}
+.lak-spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: #1e4e79;
+  border-radius: 50%;
+  animation: lak-queue-spin 0.7s linear infinite;
+}
+@keyframes lak-queue-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
