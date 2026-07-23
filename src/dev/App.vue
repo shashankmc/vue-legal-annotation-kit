@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // TEMP: verifying createLazySource against a simulated slow backend.
-import { ref } from "vue";
+// import { ref } from "vue";
 import AnnotatorQueue from "../components/AnnotatorQueue.vue";
 import { createBulkSource } from "../model/bulkSource";
 // import { createLazySource } from "../model/lazySource";
