@@ -14,7 +14,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/legal-annotation-kit.js",
       "require": "./dist/legal-annotation-kit.umd.cjs"
-    }
+    },
+    "./style.css": "./dist/legal-annotation-kit.css"
   },
   "scripts": {
     "dev": "vite",
