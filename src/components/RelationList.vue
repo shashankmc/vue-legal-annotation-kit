@@ -8,6 +8,7 @@ import { RELATION_LABELS } from "../types";
 const props = defineProps<{
   annotations: Annotation[];
   colors: Record<string, string>;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -79,6 +80,7 @@ const removeLabel = (row: Row, label: string) =>
           <button
             class="rel__dir"
             title="Change direction"
+            :disabled="readonly"
             @click="emit('set-direction', row.from, row.to, nextDirection(row.direction))"
           >
             {{ ARROWS[row.direction] }}
@@ -87,7 +89,7 @@ const removeLabel = (row: Row, label: string) =>
             <span class="rel__swatch" :style="{ background: meta.get(row.to)?.color }" />
             {{ meta.get(row.to)?.number }}
           </span>
-          <button class="rel__del" title="Delete relation" @click="emit('remove', row.from, row.to)">
+          <button v-if="!readonly" class="rel__del" title="Delete relation" @click="emit('remove', row.from, row.to)">
             🗑
           </button>
         </div>
@@ -95,9 +97,10 @@ const removeLabel = (row: Row, label: string) =>
         <div class="rel__labels">
           <span v-for="l in row.labels" :key="l" class="chip">
             {{ l }}
-            <button class="chip__x" @click="removeLabel(row, l)">×</button>
+            <button v-if="!readonly" class="chip__x" @click="removeLabel(row, l)">×</button>
           </span>
           <select
+            v-if="!readonly"
             class="rel__add"
             value=""
             @change="addLabel(row, ($event.target as HTMLSelectElement).value)"

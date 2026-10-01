@@ -3,16 +3,25 @@ import type { AnnotationLevel, AssignmentStatus, QueuePosition } from "../types"
 
 // Top bar: document name, level, status, progress, and sequence navigation.
 // Emits raw intents; the parent decides what saving/advancing means.
-const props = defineProps<{
-  status: AssignmentStatus;
-  position: QueuePosition;
-  annotationLevel: AnnotationLevel;
-  documentName: string;
-  /** Whether there's anything the Save button hasn't captured yet. */
-  unsaved?: boolean;
-  /** Briefly true right after a manual save, for a "Saved ✓" confirmation. */
-  justSaved?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    status: AssignmentStatus;
+    position: QueuePosition;
+    annotationLevel: AnnotationLevel;
+    documentName: string;
+    /** Whether there's anything the Save button hasn't captured yet. */
+    unsaved?: boolean;
+    /** Briefly true right after a manual save, for a "Saved ✓" confirmation. */
+    justSaved?: boolean;
+    /** Show progress and Back/Next. Off for a single document outside a queue. */
+    navigation?: boolean;
+    /** Nothing can be edited, so there is nothing to save either. */
+    readonly?: boolean;
+    /** A save is in flight — the buttons wait for it rather than queue another. */
+    saving?: boolean;
+  }>(),
+  { navigation: true, readonly: false, saving: false },
+);
 
 defineEmits<{ previous: []; save: []; next: [] }>();
 
@@ -37,25 +46,32 @@ const percent = () =>
     <div class="header__left">
       <span class="header__doc-name" :title="documentName">{{ documentName }}</span>
       <span class="badge badge--level">{{ LEVEL_LABELS[annotationLevel] }}</span>
-      <span class="badge" :class="status === 'done' ? 'badge--done' : 'badge--pending'">
+      <span v-if="status" class="badge" :class="status === 'done' ? 'badge--done' : 'badge--pending'">
         {{ status }}
       </span>
     </div>
 
-    <div class="header__progress">
+    <div v-if="navigation" class="header__progress">
       <span class="header__count">{{ position.current }}/{{ position.total }}</span>
       <div class="progress">
         <div class="progress__bar" :style="{ width: percent() + '%' }">{{ percent() }}%</div>
       </div>
     </div>
 
-    <div class="header__nav">
-      <button class="btn btn--outline" :disabled="isFirst()" @click="$emit('previous')">
+    <div v-if="navigation || !readonly" class="header__nav">
+      <button
+        v-if="navigation"
+        class="btn btn--outline"
+        :disabled="isFirst() || saving"
+        @click="$emit('previous')"
+      >
         ← Back
       </button>
       <button
+        v-if="!readonly"
         class="btn btn--outline btn--save"
         :class="{ 'btn--unsaved': unsaved && !justSaved, 'btn--saved': justSaved }"
+        :disabled="saving"
         @click="$emit('save')"
       >
         <span class="btn__icon" aria-hidden="true">
@@ -90,7 +106,7 @@ const percent = () =>
         </span>
         Save
       </button>
-      <button class="btn btn--primary" @click="$emit('next')">
+      <button v-if="navigation" class="btn btn--primary" :disabled="saving" @click="$emit('next')">
         {{ isLast() ? "Finish" : "Next →" }}
       </button>
     </div>

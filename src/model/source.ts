@@ -59,7 +59,7 @@ export interface AnnotationSource {
 }
 
 /** Flatten a task file into one annotator's ordered queue of bundles. */
-export function flattenAssignments(task: TaskData, annotatorId: number): AssignmentBundle[] {
+export function flattenAssignments(task: TaskData, annotatorId: number | string): AssignmentBundle[] {
   const bundles: AssignmentBundle[] = [];
   for (const doc of task.documents) {
     for (const assignment of doc.assignments) {

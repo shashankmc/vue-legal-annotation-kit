@@ -146,6 +146,15 @@ export function useAnnotator(
     }
   }
 
+  /** Set the free-text metadata of one annotation; blank clears it. */
+  function setMetadata(id: number, value: string) {
+    const a = find(id);
+    if (a) {
+      a.metadata = value.trim() === "" ? null : value;
+      dirty.value = true;
+    }
+  }
+
   /** Begin drawing a relation from `id`. */
   function startLinking(id: number) {
     linkingFrom.value = id;
@@ -203,6 +212,7 @@ export function useAnnotator(
     select,
     markSaved,
     setConfidence,
+    setMetadata,
     startLinking,
     linkTo,
     removeRelation,

@@ -11,7 +11,7 @@ import { flattenAssignments } from "./source";
  */
 export function createBulkSource(
   task: TaskData,
-  annotatorId: number,
+  annotatorId: number | string,
   storageKey = `lak:bulk:${task.name}:${annotatorId}`,
 ): AnnotationSource {
   const cached = localStorage.getItem(storageKey);

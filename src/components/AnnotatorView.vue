@@ -19,36 +19,57 @@ import { useAnnotator } from "../model/useAnnotator";
 import { snapToLevel } from "../model/spans";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 
+/** Hands the assignment to the host. May return a promise: the view waits
+ * for it, and keeps the work (local draft included) if it rejects. */
+type AssignmentHandler = (assignment: Assignment) => Promise<void> | void;
+
 // The annotator's workspace. Annotators move through their assigned documents
 // in sequence (no free navigation); "next" means the current one is finished.
-const props = defineProps<{
-  document: AnnotationDocument;
-  labelset: Labelset;
-  annotationLevel: AnnotationLevel;
-  assignment: Assignment;
-  position: QueuePosition;
-  /** Other queue documents this one can point at (document-relation targets). */
-  otherDocuments?: DocumentRef[];
-  /** Other documents' relations pointing at this one — read-only display. */
-  incomingRelations?: IncomingRelation[];
-  guidelinesUrl?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    document: AnnotationDocument;
+    labelset: Labelset;
+    annotationLevel: AnnotationLevel;
+    assignment: Assignment;
+    position: QueuePosition;
+    /** Other queue documents this one can point at (document-relation targets). */
+    otherDocuments?: DocumentRef[];
+    /** Other documents' relations pointing at this one — read-only display. */
+    incomingRelations?: IncomingRelation[];
+    guidelinesUrl?: string;
+    /** Show progress and Back/Next. Off for one document outside a queue. */
+    navigation?: boolean;
+    /** Look, don't touch: no creating, editing, deleting or saving. */
+    readonly?: boolean;
+    // Declared as props rather than emits so the view can await what the host
+    // returns — `@save="…"` in a parent template still binds to these.
+    onSave?: AssignmentHandler;
+    onNext?: AssignmentHandler;
+    onPrevious?: AssignmentHandler;
+  }>(),
+  { navigation: true, readonly: false },
+);
 
 // A task is either span-level or document-level, never both — this decides
 // which half of the workspace (span tools vs. whole-document tags) renders.
 const isDocumentLevel = computed(() => props.annotationLevel === "document");
 
 const emit = defineEmits<{
-  save: [assignment: Assignment];
-  next: [assignment: Assignment];
-  previous: [assignment: Assignment];
+  /** A save/next/previous handler rejected. The work is still here. */
+  "save-error": [error: unknown];
+  /** Whether there is work not yet handed off — for a host's route guard. */
+  unsaved: [value: boolean];
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
 // reload before the annotator has clicked Save/Next/Back at all — separate
 // from whatever the host's AnnotationSource does once that click happens.
-const draftKey = `lak:draft:${props.document.name}:${props.assignment.annotator}:${props.assignment.order}`;
-const existingDraft = loadDraft(draftKey);
+const draftKey =
+  props.assignment.id !== undefined
+    ? `lak:draft:assignment:${props.assignment.id}`
+    : `lak:draft:${props.document.name}:${props.assignment.annotator}:${props.assignment.order}`;
+// Read-only views edit nothing, so they neither resume nor write a draft.
+const existingDraft = props.readonly ? null : loadDraft(draftKey);
 // A resumed draft is itself unsaved work, even before useAnnotator's own
 // dirty tracking sees any new edit.
 const resumedUnsaved = ref(existingDraft !== null);
@@ -66,6 +87,7 @@ const {
   select,
   markSaved,
   setConfidence,
+  setMetadata,
   startLinking,
   linkTo,
   removeRelation,
@@ -114,6 +136,7 @@ const setSelectionConfidence = (value: number) => {
 // word-level task captures the whole word even if only part of it was
 // dragged over — before it becomes the stored annotation.
 const onCreate = (payload: { start: number; end: number; text: string }) => {
+  if (props.readonly) return;
   const range = snapToLevel(props.document.full_text, props.annotationLevel, payload.start, payload.end);
   createSpan(range.start, range.end, props.document.full_text.slice(range.start, range.end));
 };
@@ -125,7 +148,7 @@ const setActiveLabel = (label: Label) => {
 // A region click completes a relation when one is being drawn, otherwise it
 // just selects the region.
 const onActivate = (id: number) =>
-  linkingFrom.value !== null ? linkTo(id) : select(id);
+  linkingFrom.value !== null && !props.readonly ? linkTo(id) : select(id);
 
 // Document confidence is assignment-level.
 const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
@@ -138,6 +161,7 @@ const savedConfidence = ref(props.assignment.confidence);
 watch(
   [annotations, documentAnnotations, documentRelations, documentConfidence],
   () =>
+    !props.readonly &&
     saveDraft(draftKey, {
       annotations: annotations.value,
       documentAnnotations: documentAnnotations.value,
@@ -178,8 +202,10 @@ const labelColors = computed(() =>
   Object.fromEntries(props.labelset.labels.map((l) => [l.name, l.color])),
 );
 
-// Save/Next/Back all hand the snapshot off to the host's AnnotationSource, so
-// the local crash-recovery buffer is no longer needed once any of them fires.
+watch(hasUnsavedChanges, (value) => emit("unsaved", value), { immediate: true });
+
+// Once the host has stored the snapshot, the local crash-recovery buffer is no
+// longer needed. Not before: a save that fails must leave the work recoverable.
 const clearLocalState = () => {
   clearDraft(draftKey);
   markSaved();
@@ -187,18 +213,42 @@ const clearLocalState = () => {
   savedConfidence.value = documentConfidence.value;
 };
 
-// Back/Next never lose work — they always save first, so there's nothing to
-// confirm on the way out.
-const onSaveClick = () => {
-  clearLocalState();
-  emit("save", snapshot.value);
-  flashSaved();
+const saving = ref(false);
+const saveError = ref<string | null>(null);
+
+/**
+ * Hands a snapshot to the host and waits for it. Returns whether it was
+ * stored. On failure nothing is cleared — the edits stay on screen and in the
+ * local draft — and the reason is shown until the next attempt.
+ */
+const persist = async (handler: AssignmentHandler | undefined): Promise<boolean> => {
+  if (props.readonly || saving.value) return false;
+  const sent = snapshot.value;
+  const sentAs = JSON.stringify(sent);
+  saving.value = true;
+  saveError.value = null;
+  try {
+    await handler?.(sent);
+  } catch (e) {
+    saveError.value = e instanceof Error && e.message ? e.message : "Saving failed.";
+    emit("save-error", e);
+    return false;
+  } finally {
+    saving.value = false;
+  }
+  // Only what was sent is saved. An edit made while the request was in
+  // flight is still unsaved, so it keeps its draft and dirty flag.
+  if (JSON.stringify(snapshot.value) === sentAs) clearLocalState();
+  return true;
 };
 
-const onPrevious = () => {
-  clearLocalState();
-  emit("previous", snapshot.value);
+// Back/Next never lose work — they always save first, so there's nothing to
+// confirm on the way out.
+const onSaveClick = async () => {
+  if (await persist(props.onSave)) flashSaved();
 };
+
+const onPrevious = () => persist(props.onPrevious);
 
 // Advancing marks the document done — gate on a genuinely empty document
 // with the HTML modal instead of window.confirm. Only the first time
@@ -207,10 +257,7 @@ const onPrevious = () => {
 const showEmptyDocModal = ref(false);
 const wasPending = props.assignment.status !== "done";
 
-const advanceNext = () => {
-  clearLocalState();
-  emit("next", snapshot.value);
-};
+const advanceNext = () => persist(props.onNext);
 
 const onNext = () => {
   if (wasPending && !hasAnnotations.value) {
@@ -244,7 +291,7 @@ const flashSaved = () => {
 // Number keys arm a label: 1–9 for the first nine, 0 for the tenth. Only
 // meaningful for span tasks — document-level tags have nothing to arm.
 const onKey = (e: KeyboardEvent) => {
-  if (isDocumentLevel.value) return;
+  if (isDocumentLevel.value || props.readonly) return;
   const el = e.target as HTMLElement | null;
   if (
     e.ctrlKey ||
@@ -265,7 +312,7 @@ const onKey = (e: KeyboardEvent) => {
 
 // Remind the annotator that unsaved work will be lost when leaving the page.
 const warnIfUnsaved = (e: BeforeUnloadEvent) => {
-  if (hasUnsavedChanges.value) e.preventDefault();
+  if (hasUnsavedChanges.value || saving.value) e.preventDefault();
 };
 onMounted(() => {
   window.addEventListener("beforeunload", warnIfUnsaved);
@@ -287,10 +334,23 @@ onBeforeUnmount(() => {
       :document-name="document.name"
       :unsaved="hasUnsavedChanges"
       :just-saved="justSaved"
+      :navigation="navigation"
+      :readonly="readonly"
+      :saving="saving"
       @previous="onPrevious"
       @save="onSaveClick"
       @next="onNext"
     />
+
+    <p v-if="saveError" class="lak-annotator__error" role="alert">
+      <span>
+        Your changes could not be saved: {{ saveError }} They are kept on this
+        device, so you can try again or reload without losing them.
+      </span>
+      <button type="button" class="lak-annotator__error-close" aria-label="Dismiss" @click="saveError = null">
+        ×
+      </button>
+    </p>
 
     <div class="lak-annotator__body">
       <LabelSidebar
@@ -301,6 +361,7 @@ onBeforeUnmount(() => {
         :annotation-confidence="selectionConfidence"
         :document-annotations="documentAnnotations"
         :guidelines-url="guidelinesUrl"
+        :readonly="readonly"
         v-model:document-confidence="documentConfidence"
         @select="setActiveLabel"
         @update:annotation-confidence="setSelectionConfidence"
@@ -314,6 +375,7 @@ onBeforeUnmount(() => {
         :colors="labelColors"
         :selected-id="selectedId"
         :linking="linkingFrom !== null"
+        :readonly="readonly"
         @create="onCreate"
         @select="onActivate"
       />
@@ -328,7 +390,9 @@ onBeforeUnmount(() => {
         :selected-id="selectedId"
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
+        :readonly="readonly"
         @select="onActivate"
+        @set-metadata="setMetadata"
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"
@@ -374,6 +438,27 @@ onBeforeUnmount(() => {
   background: var(--lak-bg, #fff);
   color: #111;
   font-family: system-ui, sans-serif;
+}
+.lak-annotator__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 0.75rem 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+.lak-annotator__error-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
 }
 .lak-annotator__body {
   display: grid;

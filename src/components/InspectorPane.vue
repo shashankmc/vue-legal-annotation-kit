@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { Annotation, DocumentAnnotation, DocumentRelation, RelationDirection } from "../types";
 import type { DocumentRef, IncomingRelation } from "../model/source";
 import RelationList from "./RelationList.vue";
@@ -6,7 +7,7 @@ import DocumentRelationList from "./DocumentRelationList.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
 // annotator select, delete or link them.
-defineProps<{
+const props = defineProps<{
   documentLevel: boolean;
   annotations: Annotation[];
   documentAnnotations: DocumentAnnotation[];
@@ -17,6 +18,7 @@ defineProps<{
   selectedId: number | null;
   selectedDocumentAnnotationId: number | null;
   linkingFrom: number | null;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -31,7 +33,14 @@ const emit = defineEmits<{
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
   "set-relation-labels": [from: number, to: number, labels: string[]];
+  "set-metadata": [id: number, value: string];
 }>();
+
+// The selected span, for its metadata field — per-span notes the annotator
+// writes, kept with the annotation (not the HTML offsets in html_metadata).
+const selected = computed(() =>
+  props.selectedId === null ? null : (props.annotations.find((a) => a.id === props.selectedId) ?? null),
+);
 </script>
 
 <template>
@@ -50,6 +59,7 @@ const emit = defineEmits<{
           <span class="region__swatch" :style="{ background: colors[d.label] }" />
           <span class="region__label">{{ d.label }}</span>
           <button
+            v-if="!readonly"
             class="region__act"
             title="Remove"
             @click.stop="emit('remove-document-annotation', d.id)"
@@ -61,7 +71,7 @@ const emit = defineEmits<{
       </ul>
 
       <DocumentRelationList
-        v-if="otherDocuments.length || documentRelations.length || incomingRelations.length"
+        v-if="!readonly && (otherDocuments.length || documentRelations.length || incomingRelations.length)"
         :relations="documentRelations"
         :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"
@@ -88,14 +98,19 @@ const emit = defineEmits<{
           <span class="region__label">{{ a.label }}</span>
           <span class="region__text">{{ a.text }}</span>
           <button
-            v-if="a.id === selectedId"
+            v-if="a.id === selectedId && !readonly"
             class="region__act"
             title="Draw a relation from this region"
             @click.stop="emit('link', a.id)"
           >
             🔗
           </button>
-          <button class="region__act" title="Delete" @click.stop="emit('remove', a.id)">
+          <button
+            v-if="!readonly"
+            class="region__act"
+            title="Delete"
+            @click.stop="emit('remove', a.id)"
+          >
             🗑
           </button>
         </li>
@@ -106,9 +121,21 @@ const emit = defineEmits<{
         Click a target region to link it.
       </p>
 
+      <label v-if="selected" class="metadata">
+        <span class="metadata__title">Metadata · {{ selected.label }}</span>
+        <textarea
+          class="metadata__input"
+          rows="3"
+          placeholder="Notes about this annotation"
+          :value="selected.metadata ?? ''"
+          :readonly="readonly"
+          @input="emit('set-metadata', selected.id, ($event.target as HTMLTextAreaElement).value)"
+        />
+      </label>
       <RelationList
         :annotations="annotations"
         :colors="colors"
+        :readonly="readonly"
         @remove="(from, to) => emit('remove-relation', from, to)"
         @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
         @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"
@@ -193,6 +220,24 @@ const emit = defineEmits<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+}
+.metadata__title {
+  font-size: 0.8rem;
+  color: var(--lak-muted);
+}
+.metadata__input {
+  font: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--lak-border);
+  border-radius: 6px;
 }
 .regions__empty {
   color: var(--lak-muted);

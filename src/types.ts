@@ -84,7 +84,11 @@ export interface DocumentRelation {
 }
 
 export interface Assignment {
-  annotator: number;
+  /** The host's own id for this assignment, when it has one. Scopes the local
+   * crash-recovery draft, which would otherwise be keyed on document name +
+   * annotator + order — not unique across tasks that reuse a document. */
+  id?: number | string;
+  annotator: number | string;
   /** Position in the annotator's queue (1-based when displayed). */
   order: number;
   status: AssignmentStatus;

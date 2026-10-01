@@ -271,6 +271,26 @@ the package never talks to a backend directly. Two factories ship:
   delegate/backend** (e.g. Supabase Row Level Security scoped to the authenticated
   user), not in this package — it only ever calls whatever `delegate` it's given.
 
+### Saving and failures
+
+`save` (and Back/Next, which save first) is awaited. Until it resolves, the
+annotator's local crash-recovery draft is kept; if it rejects, nothing is
+cleared, the annotator stays on the document, and the reason is shown above it.
+Both components emit `save-error` with the error, and `unsaved` (a boolean)
+whenever there is work not yet saved — enough for a host router's
+leave-the-page guard, which `beforeunload` alone does not cover.
+
+Give each assignment an `id` when the host has one: the draft is keyed on it,
+which keeps two tasks that reuse a document name from sharing a draft.
+
+### Other host options
+
+| Component | Prop | Default | |
+|---|---|---|---|
+| `AnnotatorQueue` | `urlParam` | `"seq"` | Query param the position is kept in; `false` when the host's router owns the URL. |
+| `AnnotatorView` | `navigation` | `true` | Progress and Back/Next. Off to show one document with just Save. |
+| `AnnotatorView` | `readonly` | `false` | Show annotations without letting anything change; no Save, no draft. |
+
 ---
 
 ## 6. Distribution

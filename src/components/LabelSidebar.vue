@@ -15,6 +15,8 @@ const props = defineProps<{
   /** Confidence only applies once a span or document tag is selected. */
   hasSelection?: boolean;
   guidelinesUrl?: string;
+  /** Show the labels and ratings without letting anything change. */
+  readonly?: boolean;
 }>();
 
 defineEmits<{
@@ -51,8 +53,8 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
         v-for="(label, i) in labels"
         :key="label.name"
         class="label"
-        :class="{ 'is-active': label.name === activeLabel?.name }"
-        @click="$emit('select', label)"
+        :class="{ 'is-active': label.name === activeLabel?.name, 'is-readonly': readonly }"
+        @click="!readonly && $emit('select', label)"
       >
         <span class="label__swatch" :style="{ background: label.color }" />
         <span class="label__name">{{ label.name }}</span>
@@ -67,8 +69,8 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
           v-for="label in labels"
           :key="label.name"
           class="doc-tag"
-          :class="{ 'is-tagged': isDocumentTagged(label) }"
-          @click="$emit('toggle-document-label', label)"
+          :class="{ 'is-tagged': isDocumentTagged(label), 'is-readonly': readonly }"
+          @click="!readonly && $emit('toggle-document-label', label)"
         >
           <span class="doc-tag__swatch" :style="{ background: label.color }" />
           <span class="doc-tag__name">{{ label.name }}</span>
@@ -84,12 +86,13 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
         v-if="!documentLevel || hasSelection"
         :label="documentLevel ? 'Tag Confidence' : 'Annotation Confidence'"
         :model-value="annotationConfidence"
-        :disabled="!hasSelection"
+        :disabled="!hasSelection || readonly"
         @update:model-value="$emit('update:annotationConfidence', $event)"
       />
       <StarRating
         label="Document Confidence"
         :model-value="documentConfidence"
+        :disabled="readonly"
         @update:model-value="$emit('update:documentConfidence', $event)"
       />
     </div>
@@ -140,6 +143,10 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
+}
+.label.is-readonly,
+.doc-tag.is-readonly {
+  cursor: default;
 }
 .label:hover {
   background: rgba(0, 0, 0, 0.05);

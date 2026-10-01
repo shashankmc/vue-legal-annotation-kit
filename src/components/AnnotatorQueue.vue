@@ -8,35 +8,45 @@ import AnnotatorView from "./AnnotatorView.vue";
 // Top-level entry point for hosts: drives Back/Save/Next through the given
 // AnnotationSource so AnnotatorView never needs to know whether documents were
 // bulk-loaded upfront or are being fetched lazily.
-const props = defineProps<{
-  source: AnnotationSource;
-  labelset: Labelset;
-  annotationLevel: AnnotationLevel;
-  guidelinesUrl?: string;
-  startPosition?: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    source: AnnotationSource;
+    labelset: Labelset;
+    annotationLevel: AnnotationLevel;
+    guidelinesUrl?: string;
+    startPosition?: number;
+    /**
+     * Query param the current position round-trips through, or `false` for a
+     * host whose router owns the URL and already means something else by it.
+     */
+    urlParam?: string | false;
+  }>(),
+  { urlParam: "seq" },
+);
 
 const emit = defineEmits<{
   /** Fired once the annotator advances past the last document in the queue. */
   complete: [];
+  /** Saving failed; the annotator is still on the same document, work intact. */
+  "save-error": [error: unknown];
+  /** Whether the open document has work not yet saved — for a route guard. */
+  unsaved: [value: boolean];
 }>();
 
-// The current position round-trips through the URL's `seq` query param, so a
+// The current position round-trips through the URL (`seq` by default), so a
 // reload or a shared link resumes at the same document — takes priority over
-// startPosition, which only matters on a first visit with no `seq` yet.
-const SEQ_PARAM = "seq";
-
+// startPosition, which only matters on a first visit with no param yet.
 function readSeqFromUrl(): number | null {
-  if (typeof window === "undefined") return null;
-  const raw = new URLSearchParams(window.location.search).get(SEQ_PARAM);
+  if (typeof window === "undefined" || !props.urlParam) return null;
+  const raw = new URLSearchParams(window.location.search).get(props.urlParam);
   const n = raw ? Number(raw) : NaN;
   return Number.isInteger(n) && n >= 1 ? n : null;
 }
 
 function writeSeqToUrl(pos: number) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !props.urlParam) return;
   const url = new URL(window.location.href);
-  url.searchParams.set(SEQ_PARAM, String(pos));
+  url.searchParams.set(props.urlParam, String(pos));
   window.history.replaceState(window.history.state, "", url);
 }
 
@@ -82,23 +92,39 @@ watch(
   { immediate: true },
 );
 
+// True while Back/Next is saving before it moves — the overlay covers the
+// document so nothing is edited after the snapshot was taken.
+const saving = ref(false);
+const savingThen = async (work: () => Promise<void>) => {
+  saving.value = true;
+  try {
+    await work();
+  } finally {
+    saving.value = false;
+  }
+};
+
+// Each of these rejects when the save does, which AnnotatorView reports and
+// recovers from — so a failed save never moves the annotator on.
 const onSave = (assignment: Assignment) => save(assignment);
 
-const onPrevious = async (assignment: Assignment) => {
-  await save(assignment);
-  await goTo(position.value - 1);
-};
+const onPrevious = (assignment: Assignment) =>
+  savingThen(async () => {
+    await save(assignment);
+    await goTo(position.value - 1);
+  });
 
 // Advancing means the document is finished.
-const onNext = async (assignment: Assignment) => {
-  await save({ ...assignment, status: "done" });
-  if (position.value >= total) {
-    await props.source.finish?.();
-    emit("complete");
-    return;
-  }
-  await goTo(position.value + 1);
-};
+const onNext = (assignment: Assignment) =>
+  savingThen(async () => {
+    await save({ ...assignment, status: "done" });
+    if (position.value >= total) {
+      await props.source.finish?.();
+      emit("complete");
+      return;
+    }
+    await goTo(position.value + 1);
+  });
 
 </script>
 
@@ -118,6 +144,8 @@ const onNext = async (assignment: Assignment) => {
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"
+      @save-error="emit('save-error', $event)"
+      @unsaved="emit('unsaved', $event)"
     />
     <div v-else-if="loading" class="lak-queue-status">
       <span class="lak-spinner" aria-hidden="true" />
@@ -131,9 +159,9 @@ const onNext = async (assignment: Assignment) => {
          previous one stays on screen — this overlay is the only sign a lazy
          source's load/save is in flight, and blocks stale interaction with
          the document underneath until it resolves. -->
-    <div v-if="bundle && loading" class="lak-queue-overlay" role="status" aria-live="polite">
+    <div v-if="bundle && (loading || saving)" class="lak-queue-overlay" role="status" aria-live="polite">
       <span class="lak-spinner" aria-hidden="true" />
-      Loading…
+      {{ saving && !loading ? "Saving…" : "Loading…" }}
     </div>
   </div>
 </template>

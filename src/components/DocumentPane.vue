@@ -15,6 +15,8 @@ const props = defineProps<{
   selectedId: number | null;
   /** True while a relation is being drawn — clicking a mark links it. */
   linking?: boolean;
+  /** Selecting text creates nothing; marks can still be clicked to inspect. */
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -55,7 +57,7 @@ const foreground = (ids: number[]): Annotation | undefined => {
 };
 
 const onMouseUp = () => {
-  if (!root.value) return;
+  if (!root.value || props.readonly) return;
   const range = selectionOffsets(root.value);
   if (!range) return;
   emit("create", { ...range, text: props.text.slice(range.start, range.end) });
