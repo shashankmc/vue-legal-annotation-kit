@@ -34,11 +34,11 @@ const addable = () => {
   return props.otherDocuments.filter((d) => !taken.has(documentKey(d)));
 };
 
-// What a document is called in this list: its name, plus its queue position
-// when another document has the same name. A relation whose target is not
-// among otherDocuments shows what it stores.
-const label = (d: DocumentRef) =>
-  props.otherDocuments.filter((o) => o.name === d.name).length > 1 ? `${d.name} (#${d.order})` : d.name;
+// What a document is called in this list: its name and queue position, which
+// also tells apart documents that share a name — including one that shares
+// the open document's name. A relation whose target is not among
+// otherDocuments shows what it stores.
+const label = (d: DocumentRef) => `${d.name} (#${d.order})`;
 const targetLabel = (to: string) => {
   const d = props.otherDocuments.find((o) => documentKey(o) === to);
   return d ? label(d) : to;
