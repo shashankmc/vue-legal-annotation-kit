@@ -108,31 +108,6 @@ const {
   existingDraft?.documentRelations ?? props.assignment.document_relations,
 );
 
-const selectedAnnotation = computed(
-  () => annotations.value.find((a) => a.id === selectedId.value) ?? null,
-);
-
-const selectedDocumentAnnotation = computed(
-  () => documentAnnotations.value.find((d) => d.id === selectedDocumentAnnotationId.value) ?? null,
-);
-
-// The sidebar's single "Annotation Confidence" widget rates whichever kind of
-// annotation this task's mode selects — a span, or a document tag.
-const hasSelection = computed(() =>
-  isDocumentLevel.value ? selectedDocumentAnnotationId.value !== null : selectedId.value !== null,
-);
-const selectionConfidence = computed(() =>
-  isDocumentLevel.value ? (selectedDocumentAnnotation.value?.confidence ?? 0) : (selectedAnnotation.value?.confidence ?? 0),
-);
-const setSelectionConfidence = (value: number) => {
-  if (isDocumentLevel.value) {
-    if (selectedDocumentAnnotationId.value !== null)
-      setDocumentAnnotationConfidence(selectedDocumentAnnotationId.value, value);
-  } else if (selectedId.value !== null) {
-    setConfidence(selectedId.value, value);
-  }
-};
-
 // Snap the raw browser selection to the task's declared granularity — e.g. a
 // word-level task captures the whole word even if only part of it was
 // dragged over — before it becomes the stored annotation.
@@ -358,14 +333,11 @@ onBeforeUnmount(() => {
         :labels="labelset.labels"
         :document-level="isDocumentLevel"
         :active-label="activeLabel"
-        :has-selection="hasSelection"
-        :annotation-confidence="selectionConfidence"
         :document-annotations="documentAnnotations"
         :guidelines-url="guidelinesUrl"
         :readonly="readonly"
         v-model:document-confidence="documentConfidence"
         @select="setActiveLabel"
-        @update:annotation-confidence="setSelectionConfidence"
         @toggle-document-label="toggleDocumentLabel"
       />
       <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
@@ -394,6 +366,8 @@ onBeforeUnmount(() => {
         :readonly="readonly"
         @select="onActivate"
         @set-metadata="setMetadata"
+        @set-confidence="setConfidence"
+        @set-document-annotation-confidence="setDocumentAnnotationConfidence"
         @set-document-annotation-metadata="setDocumentAnnotationMetadata"
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"

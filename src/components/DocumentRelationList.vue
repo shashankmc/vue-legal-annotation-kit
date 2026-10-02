@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DocumentRelation } from "../types";
 import type { DocumentRef, IncomingRelation } from "../model/source";
+import { documentKey } from "../model/source";
 import { RELATION_LABELS } from "../types";
 
 // Document-level counterpart to RelationList: the current document's own
@@ -14,6 +15,8 @@ const props = defineProps<{
   incomingRelations: IncomingRelation[];
   /** Queue documents this one may point at, minus itself. */
   otherDocuments: DocumentRef[];
+  /** Show the relations without letting anything change. */
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -28,7 +31,17 @@ const available = (labels: string[]) =>
 // Only documents not already related to can be added as a new target.
 const addable = () => {
   const taken = new Set(props.relations.map((r) => r.to));
-  return props.otherDocuments.filter((d) => !taken.has(d.name));
+  return props.otherDocuments.filter((d) => !taken.has(documentKey(d)));
+};
+
+// What a document is called in this list: its name, plus its queue position
+// when another document has the same name. A relation whose target is not
+// among otherDocuments shows what it stores.
+const label = (d: DocumentRef) =>
+  props.otherDocuments.filter((o) => o.name === d.name).length > 1 ? `${d.name} (#${d.order})` : d.name;
+const targetLabel = (to: string) => {
+  const d = props.otherDocuments.find((o) => documentKey(o) === to);
+  return d ? label(d) : to;
 };
 
 const addRelation = (name: string) => {
@@ -49,8 +62,8 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
       <li v-for="rel in relations" :key="rel.to" class="rel">
         <div class="rel__ends">
           <span class="rel__arrow" aria-hidden="true">→</span>
-          <span class="rel__end" :title="rel.to">{{ rel.to }}</span>
-          <button class="rel__del" title="Remove relation" @click="emit('remove', rel.to)">
+          <span class="rel__end" :title="targetLabel(rel.to)">{{ targetLabel(rel.to) }}</span>
+          <button v-if="!readonly" class="rel__del" title="Remove relation" @click="emit('remove', rel.to)">
             🗑
           </button>
         </div>
@@ -58,9 +71,10 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
         <div class="rel__labels">
           <span v-for="l in rel.labels" :key="l" class="chip">
             {{ l }}
-            <button class="chip__x" @click="removeLabel(rel, l)">×</button>
+            <button v-if="!readonly" class="chip__x" @click="removeLabel(rel, l)">×</button>
           </span>
           <select
+            v-if="!readonly"
             class="rel__add-label"
             value=""
             @change="addLabel(rel, ($event.target as HTMLSelectElement).value)"
@@ -74,13 +88,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
     </ul>
 
     <select
-      v-if="addable().length"
+      v-if="!readonly && addable().length"
       class="doc-relations__add"
       value=""
       @change="addRelation(($event.target as HTMLSelectElement).value)"
     >
       <option value="">+ link to a document…</option>
-      <option v-for="d in addable()" :key="d.name" :value="d.name">{{ d.name }}</option>
+      <option v-for="d in addable()" :key="documentKey(d)" :value="documentKey(d)">{{ label(d) }}</option>
     </select>
 
     <template v-if="incomingRelations.length">
@@ -88,7 +102,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
         Linked by ({{ incomingRelations.length }})
       </h4>
       <ul class="rel-list">
-        <li v-for="rel in incomingRelations" :key="rel.from" class="rel rel--incoming">
+        <li v-for="(rel, i) in incomingRelations" :key="i" class="rel rel--incoming">
           <div class="rel__ends">
             <span class="rel__arrow" aria-hidden="true">←</span>
             <span

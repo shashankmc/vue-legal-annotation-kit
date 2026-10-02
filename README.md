@@ -193,7 +193,7 @@ without it the UI hides.
 
 | Field | Type | Notes |
 |---|---|---|
-| `to` | string | **`name` of the target document** it relates to. |
+| `to` | string | **Key of the target document**: its `name`, unless the host gives documents a `key` (`DocumentRef.key` / `AnnotationDocument.key`) — do that when names are not unique, e.g. two uploads of `ruling.html`. |
 | `labels` | array of string | Relation labels, same vocabulary as span relations. |
 
 **"Linked by" (not part of the stored format).** The UI also shows, read-only,

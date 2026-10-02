@@ -80,7 +80,7 @@ export interface DocumentAnnotation {
  * its own. Keeps counting/processing relations after annotation simple —
  * every relation exists exactly once, no de-duplication needed. */
 export interface DocumentRelation {
-  /** Target document's `name`. */
+  /** Target document's key — its `name` unless the host gave it a `key`. */
   to: string;
   labels: string[];
 }
@@ -104,6 +104,9 @@ export interface Assignment {
 export interface AnnotationDocument {
   name: string;
   full_text: string;
+  /** How relations refer to this document; defaults to `name`. Set it when
+   * names are not unique (see DocumentRef.key). */
+  key?: string;
 }
 
 /** Where the annotator sits in their sequence of assigned documents. */

@@ -11,7 +11,13 @@ export interface AssignmentBundle {
 export interface DocumentRef {
   name: string;
   order: number;
+  /** What a relation stores in `to` when this document is its target.
+   * Defaults to `name`; set it when names are not unique. */
+  key?: string;
 }
+
+/** The value relations use to point at a document: its key, else its name. */
+export const documentKey = (d: { name: string; key?: string }): string => d.key ?? d.name;
 
 /** One other document's relation pointing at the document being asked about —
  * for the read-only "Linked by" display, not stored anywhere itself. */
@@ -44,6 +50,7 @@ export interface AnnotationSource {
   listDocuments?(): Promise<DocumentRef[]> | DocumentRef[];
   /**
    * List other documents whose own `document_relations` point at `toName` —
+   * the open document's key (its name unless the host set `key`) —
    * purely for the read-only "Linked by" display; nothing is written to
    * `toName`'s own assignment for these. Optional: hosts that omit it simply
    * won't show a "Linked by" section.

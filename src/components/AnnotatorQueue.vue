@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import type { AnnotationSource, DocumentRef, IncomingRelation } from "../model/source";
+import { documentKey } from "../model/source";
 import type { AnnotationLevel, Assignment, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
@@ -75,7 +76,7 @@ const queuePosition = computed(() => ({ current: position.value, total }));
 // Every queue document except the one currently open — the valid targets a
 // document can point at.
 const otherDocuments = computed(() =>
-  docRefs.value.filter((d) => d.name !== bundle.value?.document.name),
+  docRefs.value.filter((d) => !bundle.value || documentKey(d) !== documentKey(bundle.value.document)),
 );
 
 // Other documents' relations pointing at whichever one is open now — a
@@ -86,7 +87,7 @@ watch(
   bundle,
   async (b) => {
     incomingRelations.value = b
-      ? ((await props.source.listIncomingRelations?.(b.document.name)) ?? [])
+      ? ((await props.source.listIncomingRelations?.(documentKey(b.document))) ?? [])
       : [];
   },
   { immediate: true },

@@ -10,10 +10,7 @@ const props = defineProps<{
   documentLevel: boolean;
   activeLabel: Label | null;
   documentConfidence: number;
-  annotationConfidence: number;
   documentAnnotations: DocumentAnnotation[];
-  /** Confidence only applies once a span or document tag is selected. */
-  hasSelection?: boolean;
   guidelinesUrl?: string;
   /** Show the labels and ratings without letting anything change. */
   readonly?: boolean;
@@ -22,7 +19,6 @@ const props = defineProps<{
 defineEmits<{
   select: [label: Label];
   "update:documentConfidence": [value: number];
-  "update:annotationConfidence": [value: number];
   "toggle-document-label": [label: Label];
 }>();
 
@@ -79,16 +75,6 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
     </div>
 
     <div class="sidebar__confidence">
-      <!-- Span mode: always shown, disabled without a selection (there's
-           always something to arm next). Document mode: no chip is "next" the
-           way an armed label is, so hide it entirely until a tag is selected. -->
-      <StarRating
-        v-if="!documentLevel || hasSelection"
-        :label="documentLevel ? 'Tag Confidence' : 'Annotation Confidence'"
-        :model-value="annotationConfidence"
-        :disabled="!hasSelection || readonly"
-        @update:model-value="$emit('update:annotationConfidence', $event)"
-      />
       <StarRating
         label="Document Confidence"
         :model-value="documentConfidence"

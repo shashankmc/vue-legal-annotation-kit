@@ -3,6 +3,7 @@ import { computed } from "vue";
 import type { Annotation, DocumentAnnotation, DocumentRelation, RelationDirection } from "../types";
 import type { DocumentRef, IncomingRelation } from "../model/source";
 import RelationList from "./RelationList.vue";
+import StarRating from "./StarRating.vue";
 import DocumentRelationList from "./DocumentRelationList.vue";
 
 // Right column: inspector. Lists the current annotations (regions) and lets the
@@ -35,6 +36,8 @@ const emit = defineEmits<{
   "set-relation-labels": [from: number, to: number, labels: string[]];
   "set-metadata": [id: number, value: string];
   "set-document-annotation-metadata": [id: number, value: string];
+  "set-confidence": [id: number, value: number];
+  "set-document-annotation-confidence": [id: number, value: number];
 }>();
 
 // Whatever is selected — a span, or a document tag — shown at the top of the
@@ -52,6 +55,11 @@ const selectedTag = computed(() =>
 );
 const selection = computed(() => selectedSpan.value ?? selectedTag.value);
 
+const setSelectionConfidence = (value: number) => {
+  if (selectedSpan.value) emit("set-confidence", selectedSpan.value.id, value);
+  else if (selectedTag.value) emit("set-document-annotation-confidence", selectedTag.value.id, value);
+};
+
 const setSelectionMetadata = (value: string) => {
   if (selectedSpan.value) emit("set-metadata", selectedSpan.value.id, value);
   else if (selectedTag.value) emit("set-document-annotation-metadata", selectedTag.value.id, value);
@@ -66,6 +74,12 @@ const setSelectionMetadata = (value: string) => {
         <span class="region__label">{{ selection.label }}</span>
         <span v-if="selectedSpan" class="selection__text" :title="selectedSpan.text">{{ selectedSpan.text }}</span>
       </div>
+      <StarRating
+        label="Confidence"
+        :model-value="selection.confidence"
+        :disabled="readonly"
+        @update:model-value="setSelectionConfidence"
+      />
       <label class="metadata">
         <span class="metadata__title">Metadata</span>
         <textarea
@@ -79,7 +93,7 @@ const setSelectionMetadata = (value: string) => {
       </label>
     </section>
     <p v-else-if="!readonly && (documentLevel ? documentAnnotations.length : annotations.length)" class="selection__hint">
-      Select {{ documentLevel ? "a tag" : "an annotation" }} to add metadata to it.
+      Select {{ documentLevel ? "a tag" : "an annotation" }} to rate it or add metadata.
     </p>
 
     <template v-if="documentLevel">
@@ -108,7 +122,8 @@ const setSelectionMetadata = (value: string) => {
       </ul>
 
       <DocumentRelationList
-        v-if="!readonly && (otherDocuments.length || documentRelations.length || incomingRelations.length)"
+        v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
+        :readonly="readonly"
         :relations="documentRelations"
         :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"
