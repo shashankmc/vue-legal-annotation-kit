@@ -96,6 +96,7 @@ const {
   toggleDocumentLabel,
   removeDocumentAnnotation,
   setDocumentAnnotationConfidence,
+  setDocumentAnnotationMetadata,
   selectDocumentAnnotation,
   documentRelations,
   addDocumentRelation,
@@ -393,6 +394,7 @@ onBeforeUnmount(() => {
         :readonly="readonly"
         @select="onActivate"
         @set-metadata="setMetadata"
+        @set-document-annotation-metadata="setDocumentAnnotationMetadata"
         @remove="remove"
         @select-document-annotation="selectDocumentAnnotation"
         @remove-document-annotation="removeDocumentAnnotation"

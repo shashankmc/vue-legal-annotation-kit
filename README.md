@@ -66,8 +66,8 @@ The package must support everything the current tool does:
 - **Span confidence** — a 1–5 star rating per span annotation
   (`confidence`; `0` means unrated). Shown in the UI as *Annotation Confidence*.
 
-### Per-span metadata
-- A free-text **metadata string** attached to each span annotation (`metadata`).
+### Per-annotation metadata
+- A free-text **metadata string** attached to each span annotation and each document tag (`metadata`), edited in the inspector once the annotation is selected.
 - Separately, `html_metadata` holds HTML **offset positions** (`startOffset`,
   `endOffset`, `globalOffsets`) — only relevant for HTML documents, not
   user-facing text.
@@ -173,6 +173,7 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `id` | number | Stable unique document-annotation ID (assigned by our database). |
 | `label` | string | Must match a `labelset` label name. No `start`/`end`/`text` — it tags the whole document, not a span. At most one entry per label; toggled on/off in the UI. |
 | `confidence` | number (0–5) | **Per-tag confidence** stars; `0` = unrated. Distinct from the assignment-level `confidence` above, which rates the document as a whole. |
+| `metadata` | string \| null | Free-text notes on the tag, like a span's `metadata`. Optional. |
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |

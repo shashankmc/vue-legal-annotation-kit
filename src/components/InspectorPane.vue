@@ -34,17 +34,54 @@ const emit = defineEmits<{
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
   "set-relation-labels": [from: number, to: number, labels: string[]];
   "set-metadata": [id: number, value: string];
+  "set-document-annotation-metadata": [id: number, value: string];
 }>();
 
-// The selected span, for its metadata field — per-span notes the annotator
-// writes, kept with the annotation (not the HTML offsets in html_metadata).
-const selected = computed(() =>
-  props.selectedId === null ? null : (props.annotations.find((a) => a.id === props.selectedId) ?? null),
+// Whatever is selected — a span, or a document tag — shown at the top of the
+// pane with its metadata field, so the notes are in view the moment something
+// is picked rather than below a long list of annotations.
+const selectedSpan = computed(() =>
+  props.documentLevel || props.selectedId === null
+    ? null
+    : (props.annotations.find((a) => a.id === props.selectedId) ?? null),
 );
+const selectedTag = computed(() =>
+  !props.documentLevel || props.selectedDocumentAnnotationId === null
+    ? null
+    : (props.documentAnnotations.find((d) => d.id === props.selectedDocumentAnnotationId) ?? null),
+);
+const selection = computed(() => selectedSpan.value ?? selectedTag.value);
+
+const setSelectionMetadata = (value: string) => {
+  if (selectedSpan.value) emit("set-metadata", selectedSpan.value.id, value);
+  else if (selectedTag.value) emit("set-document-annotation-metadata", selectedTag.value.id, value);
+};
 </script>
 
 <template>
   <aside class="inspector">
+    <section v-if="selection" class="selection" :style="{ '--region-color': colors[selection.label] }">
+      <div class="selection__head">
+        <span class="region__swatch" :style="{ background: colors[selection.label] }" />
+        <span class="region__label">{{ selection.label }}</span>
+        <span v-if="selectedSpan" class="selection__text" :title="selectedSpan.text">{{ selectedSpan.text }}</span>
+      </div>
+      <label class="metadata">
+        <span class="metadata__title">Metadata</span>
+        <textarea
+          class="metadata__input"
+          rows="3"
+          :placeholder="readonly ? 'No metadata' : 'Notes about this annotation'"
+          :value="selection.metadata ?? ''"
+          :readonly="readonly"
+          @input="setSelectionMetadata(($event.target as HTMLTextAreaElement).value)"
+        />
+      </label>
+    </section>
+    <p v-else-if="!readonly && (documentLevel ? documentAnnotations.length : annotations.length)" class="selection__hint">
+      Select {{ documentLevel ? "a tag" : "an annotation" }} to add metadata to it.
+    </p>
+
     <template v-if="documentLevel">
       <h4 class="inspector__title">Document Tags ({{ documentAnnotations.length }})</h4>
       <ul class="regions">
@@ -121,17 +158,6 @@ const selected = computed(() =>
         Click a target region to link it.
       </p>
 
-      <label v-if="selected" class="metadata">
-        <span class="metadata__title">Metadata · {{ selected.label }}</span>
-        <textarea
-          class="metadata__input"
-          rows="3"
-          placeholder="Notes about this annotation"
-          :value="selected.metadata ?? ''"
-          :readonly="readonly"
-          @input="emit('set-metadata', selected.id, ($event.target as HTMLTextAreaElement).value)"
-        />
-      </label>
       <RelationList
         :annotations="annotations"
         :colors="colors"
@@ -221,11 +247,38 @@ const selected = computed(() =>
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.selection {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--lak-border);
+  border-left: 4px solid var(--region-color, var(--lak-accent));
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.selection__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+.selection__text {
+  color: var(--lak-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.selection__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--lak-muted);
+}
 .metadata {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  margin-top: 0.75rem;
 }
 .metadata__title {
   font-size: 0.8rem;

@@ -69,6 +69,8 @@ export interface DocumentAnnotation {
   label: string;
   /** 0–5 stars; 0 = unrated. */
   confidence: number;
+  /** Free-text notes on this tag, like a span's metadata. */
+  metadata?: string | null;
 }
 
 /** A relation from this document to another — always "this document links to

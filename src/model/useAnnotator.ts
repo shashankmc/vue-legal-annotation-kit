@@ -66,6 +66,7 @@ export function useAnnotator(
         id: nextTempId(documentAnnotations.value),
         label: label.name,
         confidence: 0,
+        metadata: null,
       };
       documentAnnotations.value.push(tag);
       selectedDocumentAnnotationId.value = tag.id;
@@ -81,6 +82,15 @@ export function useAnnotator(
 
   function selectDocumentAnnotation(id: number | null) {
     selectedDocumentAnnotationId.value = id;
+  }
+
+  /** Set the free-text metadata of one document-level tag; blank clears it. */
+  function setDocumentAnnotationMetadata(id: number, value: string) {
+    const d = documentAnnotations.value.find((d) => d.id === id);
+    if (d) {
+      d.metadata = value.trim() === "" ? null : value;
+      dirty.value = true;
+    }
   }
 
   /** Set the confidence rating (0–5) of one document-level tag. */
@@ -221,6 +231,7 @@ export function useAnnotator(
     toggleDocumentLabel,
     removeDocumentAnnotation,
     setDocumentAnnotationConfidence,
+    setDocumentAnnotationMetadata,
     selectDocumentAnnotation,
     addDocumentRelation,
     removeDocumentRelation,
