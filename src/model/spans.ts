@@ -41,31 +41,63 @@ function wordSegments(text: string): OffsetRange[] {
   return segments;
 }
 
-/** True if the first non-whitespace character at/after index `i` is an
- * uppercase letter, or there is none (end of text). Guards against
- * abbreviations like "Art. 5" — "5" isn't capitalized, so that period
- * doesn't end the sentence. */
+/** True if the next sentence plausibly starts at/after index `i`: the first
+ * non-whitespace character, past any opening quotes or brackets, is an
+ * uppercase letter in any script — or there is nothing left. Guards against
+ * abbreviations like "Art. 5" — "5" isn't capitalized, so that period doesn't
+ * end the sentence. */
 function followedByCapitalOrEnd(text: string, i: number): boolean {
   let j = i;
   while (j < text.length && /\s/.test(text[j])) j++;
-  return j === text.length || /[A-Z]/.test(text[j]);
+  while (j < text.length && OPENERS.test(text[j])) j++;
+  return j === text.length || /\p{Lu}/u.test(text[j]);
 }
 
-/** Splits after a `.`/`!`/`?` run followed by whitespace (or end-of-text)
- * and then a capitalized word (or end-of-text). A heuristic — doesn't know
- * about abbreviations in general — but the capitalization check handles the
- * common case, and it's predictable and good enough for snapping a
- * selection to "the sentence it touches". */
+const TERMINATOR = /[.!?]/;
+/** Characters that close a sentence after its full stop: quotes and brackets. */
+const CLOSERS = /[)\]}"'\u2019\u201D\u00BB]/;
+const OPENERS = /[(\[{"'\u2018\u201C\u00AB]/;
+/** A citation marker as Wikipedia and many judgments print them: "[12]",
+ * "[a]", "[note 3]" — short, bracketed, right after the full stop. */
+const CITATION = /^\[[^\]\n]{1,12}\]/;
+
+/** Index just past the end of a sentence whose terminator is at `i`: the run
+ * of terminators ("?!", "..."), then any closing quotes, brackets and citation
+ * markers ("Television.[51][52]", "said so.\u201D"). */
+function sentenceEnd(text: string, i: number): number {
+  let j = i + 1;
+  while (j < text.length && TERMINATOR.test(text[j])) j++;
+  for (;;) {
+    if (j < text.length && CLOSERS.test(text[j])) {
+      j++;
+      continue;
+    }
+    const citation = CITATION.exec(text.slice(j, j + 14));
+    if (citation) {
+      j += citation[0].length;
+      continue;
+    }
+    return j;
+  }
+}
+
+/** Splits after a `.`/`!`/`?` — plus whatever closes the sentence after it —
+ * followed by whitespace (or end-of-text) and then a capitalized word (or
+ * end-of-text). A heuristic — doesn't know about abbreviations in general —
+ * but the capitalization check handles the common case, and it's predictable
+ * and good enough for snapping a selection to "the sentence it touches". */
 function sentenceSegments(text: string): OffsetRange[] {
   const segments: OffsetRange[] = [];
   let start = 0;
   for (let i = 0; i < text.length; i++) {
-    const isTerminator = text[i] === "." || text[i] === "!" || text[i] === "?";
-    const atBoundary = i === text.length - 1 || /\s/.test(text[i + 1]);
-    if (isTerminator && atBoundary && followedByCapitalOrEnd(text, i + 1)) {
-      segments.push(trim(text, { start, end: i + 1 }));
-      start = i + 1;
+    if (!TERMINATOR.test(text[i])) continue;
+    const end = sentenceEnd(text, i);
+    const atBoundary = end === text.length || /\s/.test(text[end]);
+    if (atBoundary && followedByCapitalOrEnd(text, end)) {
+      segments.push(trim(text, { start, end }));
+      start = end;
     }
+    i = end - 1;
   }
   if (start < text.length) segments.push(trim(text, { start, end: text.length }));
   return segments.filter((s) => s.end > s.start);
