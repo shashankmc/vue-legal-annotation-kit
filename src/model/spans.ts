@@ -81,25 +81,34 @@ function sentenceEnd(text: string, i: number): number {
   }
 }
 
-/** Splits after a `.`/`!`/`?` — plus whatever closes the sentence after it —
- * followed by whitespace (or end-of-text) and then a capitalized word (or
- * end-of-text). A heuristic — doesn't know about abbreviations in general —
- * but the capitalization check handles the common case, and it's predictable
- * and good enough for snapping a selection to "the sentence it touches". */
+/** Sentences, never crossing a blank line: a heading or title without a full
+ * stop is a sentence of its own, not the start of the one below it. Within a
+ * paragraph, splits after a `.`/`!`/`?` — plus whatever closes the sentence
+ * after it — followed by whitespace (or end-of-text) and then a capitalized
+ * word (or end-of-text). A heuristic — doesn't know about abbreviations in
+ * general — but the capitalization check handles the common case, and it's
+ * predictable and good enough for snapping a selection to "the sentence it
+ * touches". A single line break is not a boundary: in text extracted from a
+ * PDF, or hard-wrapped, most of them fall mid-sentence. */
 function sentenceSegments(text: string): OffsetRange[] {
+  return paragraphSegments(text).flatMap((p) => sentencesWithin(text, p));
+}
+
+function sentencesWithin(text: string, paragraph: OffsetRange): OffsetRange[] {
   const segments: OffsetRange[] = [];
-  let start = 0;
-  for (let i = 0; i < text.length; i++) {
-    if (!TERMINATOR.test(text[i])) continue;
-    const end = sentenceEnd(text, i);
-    const atBoundary = end === text.length || /\s/.test(text[end]);
-    if (atBoundary && followedByCapitalOrEnd(text, end)) {
+  const within = text.slice(0, paragraph.end);
+  let start = paragraph.start;
+  for (let i = paragraph.start; i < paragraph.end; i++) {
+    if (!TERMINATOR.test(within[i])) continue;
+    const end = sentenceEnd(within, i);
+    const atBoundary = end === within.length || /\s/.test(within[end]);
+    if (atBoundary && followedByCapitalOrEnd(within, end)) {
       segments.push(trim(text, { start, end }));
       start = end;
     }
     i = end - 1;
   }
-  if (start < text.length) segments.push(trim(text, { start, end: text.length }));
+  if (start < paragraph.end) segments.push(trim(text, { start, end: paragraph.end }));
   return segments.filter((s) => s.end > s.start);
 }
 
