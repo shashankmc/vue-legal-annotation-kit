@@ -5,11 +5,16 @@ import { RELATION_LABELS } from "../types";
 
 // Flat, editable view of every relation across the annotations: direction,
 // labels and deletion. Reads annotations to resolve region numbers/colours.
-const props = defineProps<{
-  annotations: Annotation[];
-  colors: Record<string, string>;
-  readonly?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    annotations: Annotation[];
+    colors: Record<string, string>;
+    readonly?: boolean;
+    /** Labels offered in the picker; defaults to the built-in set. */
+    relationLabels?: string[];
+  }>(),
+  { relationLabels: () => [...RELATION_LABELS] },
+);
 
 const emit = defineEmits<{
   remove: [from: number, to: number];
@@ -52,7 +57,7 @@ const nextDirection = (d: RelationDirection): RelationDirection =>
   d === "right" ? "left" : d === "left" ? "bi" : "right";
 
 const available = (labels: string[]) =>
-  RELATION_LABELS.filter((l) => !labels.includes(l));
+  props.relationLabels.filter((l) => !labels.includes(l));
 
 const addLabel = (row: Row, label: string) => {
   if (label) emit("set-labels", row.from, row.to, [...row.labels, label]);

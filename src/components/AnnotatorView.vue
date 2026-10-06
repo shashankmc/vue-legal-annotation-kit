@@ -41,6 +41,8 @@ const props = withDefaults(
     navigation?: boolean;
     /** Look, don't touch: no creating, editing, deleting or saving. */
     readonly?: boolean;
+    /** Labels offered in the relation pickers; defaults to the built-in set. */
+    relationLabels?: string[];
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
@@ -364,6 +366,7 @@ onBeforeUnmount(() => {
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
         :readonly="readonly"
+        :relation-labels="relationLabels"
         @select="onActivate"
         @set-metadata="setMetadata"
         @set-confidence="setConfidence"

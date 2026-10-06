@@ -10,14 +10,20 @@ import { RELATION_LABELS } from "../types";
 // "this document links to the target" and is stored only on the document
 // that created it — "Linked by" is computed for display, not real data of
 // this document's own; edit it from the other document instead.
-const props = defineProps<{
-  relations: DocumentRelation[];
-  incomingRelations: IncomingRelation[];
-  /** Queue documents this one may point at, minus itself. */
-  otherDocuments: DocumentRef[];
-  /** Show the relations without letting anything change. */
-  readonly?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    relations: DocumentRelation[];
+    incomingRelations: IncomingRelation[];
+    /** Queue documents this one may point at, minus itself. */
+    otherDocuments: DocumentRef[];
+    /** Show the relations without letting anything change. */
+    readonly?: boolean;
+    /** Labels offered in the picker. Hosts pass their own vocabulary (e.g.
+     * BlueLab's eight link types); defaults to the built-in case-law set. */
+    relationLabels?: string[];
+  }>(),
+  { relationLabels: () => [...RELATION_LABELS] },
+);
 
 const emit = defineEmits<{
   add: [toName: string];
@@ -26,7 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const available = (labels: string[]) =>
-  RELATION_LABELS.filter((l) => !labels.includes(l));
+  props.relationLabels.filter((l) => !labels.includes(l));
 
 // Only documents not already related to can be added as a new target.
 const addable = () => {

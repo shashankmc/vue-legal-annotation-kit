@@ -21,6 +21,8 @@ const props = withDefaults(
      * host whose router owns the URL and already means something else by it.
      */
     urlParam?: string | false;
+    /** Labels offered in the relation pickers; defaults to the built-in set. */
+    relationLabels?: string[];
   }>(),
   { urlParam: "seq" },
 );
@@ -142,6 +144,7 @@ const onNext = (assignment: Assignment) =>
       :incoming-relations="incomingRelations"
       :position="queuePosition"
       :guidelines-url="guidelinesUrl"
+      :relation-labels="relationLabels"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"

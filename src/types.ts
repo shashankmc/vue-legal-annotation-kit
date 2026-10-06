@@ -83,6 +83,11 @@ export interface DocumentRelation {
   /** Target document's key — its `name` unless the host gave it a `key`. */
   to: string;
   labels: string[];
+  /** Free-form host data carried with the relation, like a span's metadata.
+   * BlueLab stores a link's `strength`, `explicit_cross_reference`,
+   * `sub_field` and `cue_span` here (see docs/annotation-upstream-requests.md,
+   * Gap 2) so the plain label can stay the link type. */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface Assignment {
