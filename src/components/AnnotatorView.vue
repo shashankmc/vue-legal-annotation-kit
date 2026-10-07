@@ -126,6 +126,14 @@ const setActiveLabel = (label: Label) => {
 const onActivate = (id: number) =>
   linkingFrom.value !== null && !props.readonly ? linkTo(id) : select(id);
 
+// Picked from the inspector list: also bring it into view in the text.
+const documentPane = ref<InstanceType<typeof DocumentPane>>();
+const onInspectorSelect = (id: number) => {
+  const linking = linkingFrom.value !== null && !props.readonly;
+  onActivate(id);
+  if (!linking) documentPane.value?.reveal(id);
+};
+
 // Document confidence is assignment-level.
 const documentConfidence = ref(existingDraft?.confidence ?? props.assignment.confidence);
 // The confidence value as of the last save — NOT the same as props, which
@@ -343,6 +351,7 @@ onBeforeUnmount(() => {
       <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
       <DocumentPane
         v-else
+        ref="documentPane"
         :text="document.full_text"
         :annotations="annotations"
         :colors="labelColors"
@@ -364,7 +373,7 @@ onBeforeUnmount(() => {
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
         :readonly="readonly"
-        @select="onActivate"
+        @select="onInspectorSelect"
         @set-metadata="setMetadata"
         @set-confidence="setConfidence"
         @set-document-annotation-confidence="setDocumentAnnotationConfidence"

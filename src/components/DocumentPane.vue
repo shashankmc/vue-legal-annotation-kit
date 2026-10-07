@@ -56,6 +56,51 @@ const foreground = (ids: number[]): Annotation | undefined => {
   return primary(ids);
 };
 
+// --- Reveal ----------------------------------------------------------------
+// Bring an annotation picked elsewhere (the inspector list) into view: scroll
+// only if it is not already fully visible, then pulse it briefly so the eye
+// finds it.
+const revealedId = ref<number | null>(null);
+let revealTimer: ReturnType<typeof setTimeout> | undefined;
+
+const reducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+const reveal = (id: number) => {
+  const marks = [...(textEl.value?.querySelectorAll<HTMLElement>(".mark") ?? [])].filter((m) =>
+    m.dataset.ids?.split(",").includes(String(id)),
+  );
+  const first = marks[0];
+  if (!first || !root.value) return;
+
+  const behavior: ScrollBehavior = reducedMotion() ? "auto" : "smooth";
+  const top = first.getBoundingClientRect().top;
+  const bottom = marks[marks.length - 1].getBoundingClientRect().bottom;
+  const scroller = root.value;
+  if (scroller.scrollHeight > scroller.clientHeight) {
+    // The pane scrolls itself (the usual, fixed-height layout).
+    const view = scroller.getBoundingClientRect();
+    if (top < view.top || bottom > view.bottom) {
+      // Start a third of the way down, so the lines before it give context.
+      const target = scroller.scrollTop + (top - view.top) - scroller.clientHeight / 3;
+      scroller.scrollTo({ top: Math.max(0, target), behavior });
+    }
+  } else if (top < 0 || bottom > window.innerHeight) {
+    // The host page scrolls instead.
+    first.scrollIntoView({ block: "center", behavior });
+  }
+
+  revealedId.value = null;
+  clearTimeout(revealTimer);
+  requestAnimationFrame(() => {
+    revealedId.value = id;
+    revealTimer = setTimeout(() => (revealedId.value = null), 1600);
+  });
+};
+
+defineExpose({ reveal });
+
 const onMouseUp = () => {
   if (!root.value || props.readonly) return;
   const range = selectionOffsets(root.value);
@@ -134,7 +179,10 @@ onMounted(() => {
   observer = new ResizeObserver(redraw);
   if (textEl.value) observer.observe(textEl.value);
 });
-onBeforeUnmount(() => observer?.disconnect());
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  clearTimeout(revealTimer);
+});
 </script>
 
 <template>
@@ -149,6 +197,7 @@ onBeforeUnmount(() => observer?.disconnect());
             :class="{
               'is-selected': seg.annotationIds.includes(selectedId ?? NaN),
               'is-overlap': seg.annotationIds.length > 1,
+              'is-revealed': seg.annotationIds.includes(revealedId ?? NaN),
             }"
             :style="{ '--mark-color': colors[foreground(seg.annotationIds)!.label] }"
             :title="seg.annotationIds.map((id) => byId.get(id)?.label).join(', ')"
@@ -219,6 +268,21 @@ onBeforeUnmount(() => observer?.disconnect());
 .mark.is-selected {
   outline: 2px solid var(--mark-color);
   outline-offset: 1px;
+}
+.mark.is-revealed {
+  animation: lak-reveal 0.8s ease-in-out 2;
+}
+@keyframes lak-reveal {
+  50% {
+    background: color-mix(in srgb, var(--mark-color) 75%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--mark-color) 35%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mark.is-revealed {
+    animation: none;
+    background: color-mix(in srgb, var(--mark-color) 75%, transparent);
+  }
 }
 .document.is-linking .mark {
   cursor: crosshair;
