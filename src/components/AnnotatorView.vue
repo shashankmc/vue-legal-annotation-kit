@@ -118,8 +118,9 @@ const onCreate = (payload: { start: number; end: number; text: string }) => {
   createSpan(range.start, range.end, props.document.full_text.slice(range.start, range.end));
 };
 
-const setActiveLabel = (label: Label) => {
-  activeLabel.value = label;
+// Picking the active label again puts it down.
+const toggleActiveLabel = (label: Label) => {
+  activeLabel.value = activeLabel.value?.name === label.name ? null : label;
 };
 
 // A region click completes a relation when one is being drawn, otherwise it
@@ -288,7 +289,7 @@ const onKey = (e: KeyboardEvent) => {
     return;
   const label = props.labelset.labels[labelIndexForKey(e.key)];
   if (label) {
-    activeLabel.value = label;
+    toggleActiveLabel(label);
     e.preventDefault();
   }
 };
@@ -344,7 +345,7 @@ onBeforeUnmount(() => {
         :guidelines-url="guidelinesUrl"
         :readonly="readonly"
         v-model:document-confidence="documentConfidence"
-        @select="setActiveLabel"
+        @select="toggleActiveLabel"
         @toggle-document-label="toggleDocumentLabel"
       />
       <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
