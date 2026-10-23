@@ -17,6 +17,7 @@ import InspectorPane from "./InspectorPane.vue";
 import ConfirmModal from "./ConfirmModal.vue";
 import { useAnnotator } from "../model/useAnnotator";
 import { snapToLevel } from "../model/spans";
+import { labelIndexForKey } from "../model/labelHotkeys";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 
 /** Hands the assignment to the host. May return a promise: the view waits
@@ -272,8 +273,8 @@ const flashSaved = () => {
   }, 1400);
 };
 
-// Number keys arm a label: 1–9 for the first nine, 0 for the tenth. Only
-// meaningful for span tasks — document-level tags have nothing to arm.
+// A label's key (shown beside it) arms it. Only meaningful for span tasks —
+// document-level tags have nothing to arm.
 const onKey = (e: KeyboardEvent) => {
   if (isDocumentLevel.value || props.readonly) return;
   const el = e.target as HTMLElement | null;
@@ -285,9 +286,7 @@ const onKey = (e: KeyboardEvent) => {
     ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName ?? "")
   )
     return;
-  if (!/^[0-9]$/.test(e.key)) return;
-  const index = e.key === "0" ? 9 : Number(e.key) - 1;
-  const label = props.labelset.labels[index];
+  const label = props.labelset.labels[labelIndexForKey(e.key)];
   if (label) {
     activeLabel.value = label;
     e.preventDefault();

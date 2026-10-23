@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DocumentAnnotation, Label } from "../types";
 import StarRating from "./StarRating.vue";
+import { labelHotkey } from "../model/labelHotkeys";
 
 // Left column: label picker + confidence ratings.
 // Purely presentational for now — selecting a label does not annotate yet.
@@ -24,9 +25,6 @@ defineEmits<{
 
 const isDocumentTagged = (label: Label) =>
   props.documentAnnotations.some((d) => d.label === label.name);
-
-// Hotkeys mirror the current tool: 1–9 then 0 for the tenth label.
-const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ? "0" : "");
 </script>
 
 <template>
@@ -54,7 +52,7 @@ const hotkey = (index: number) => (index < 9 ? String(index + 1) : index === 9 ?
       >
         <span class="label__swatch" :style="{ background: label.color }" />
         <span class="label__name">{{ label.name }}</span>
-        <span v-if="hotkey(i)" class="label__key">{{ hotkey(i) }}</span>
+        <span v-if="labelHotkey(i)" class="label__key">{{ labelHotkey(i).toUpperCase() }}</span>
       </li>
     </ul>
 
