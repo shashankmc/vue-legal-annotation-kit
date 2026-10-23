@@ -84,11 +84,26 @@ const isDocumentTagged = (label: Label) =>
 </template>
 
 <style scoped>
+/* Only the label list scrolls; the guidelines link above it and the document
+   confidence below it stay in view however many labels there are. */
 .sidebar {
   display: flex;
   flex-direction: column;
   background: var(--lak-sidebar-bg);
   padding: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+}
+.sidebar__doc-tags {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.labels,
+.doc-tags {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 .guidelines-link {
@@ -199,6 +214,7 @@ const isDocumentTagged = (label: Label) =>
   flex-shrink: 0;
 }
 .sidebar__confidence {
+  flex-shrink: 0;
   margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px solid var(--lak-border);
