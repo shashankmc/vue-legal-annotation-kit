@@ -169,7 +169,8 @@ const isDocumentTagged = (label: Label) =>
   margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.3rem;
 }
 .doc-tag {
