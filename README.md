@@ -49,8 +49,8 @@ The package must support everything the current tool does:
 ### Labels
 - A shared **label set** (`labelset`) defines the available labels, each with a
   `name` and a `color`.
-- Labels are assigned **hotkeys** in list order (`1`–`9`, then `0` — 10 labels in
-  the sample set).
+- Labels are assigned **hotkeys** in list order: `1`–`9`, then `0`, then `A`–`Z`
+  (36 in all). Pressing the active label's key, or clicking it, puts it down.
 - **Overlap rules:** labels **may overlap** freely, with one exception — the **same
   label may not be applied to the exact same `start`+`end` range twice**. The
   uniqueness key for a span is effectively `(label, start, end)`.
@@ -94,7 +94,8 @@ The current layout (to be closely reproduced) has three regions:
 
 **Left panel — labels & confidence**
 - `Quick Filter` search box to filter the label list.
-- The **label list**, each entry showing its colour and hotkey number.
+- The **label list**, each entry showing its colour and hotkey. Only this list
+  scrolls; Document Confidence stays at the bottom.
 - **Annotation Confidence** star rating (selected span).
 - **Document Confidence** star rating (whole document).
 
