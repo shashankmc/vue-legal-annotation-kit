@@ -29,18 +29,13 @@ const isDocumentTagged = (label: Label) =>
 
 <template>
   <aside class="sidebar">
-    <a
-      v-if="guidelinesUrl"
-      class="guidelines-link"
-      :href="guidelinesUrl"
-      target="_blank"
-      rel="noopener"
-    >
-      See Annotation Guidelines
-      <span class="guidelines-link__icon" aria-hidden="true">↗</span>
-    </a>
-
-    <hr class="sidebar__divider" />
+    <template v-if="guidelinesUrl">
+      <a class="guidelines-link" :href="guidelinesUrl" target="_blank" rel="noopener">
+        See Annotation Guidelines
+        <span class="guidelines-link__icon" aria-hidden="true">↗</span>
+      </a>
+      <hr class="sidebar__divider" />
+    </template>
 
     <ul v-if="!documentLevel" class="labels">
       <li
