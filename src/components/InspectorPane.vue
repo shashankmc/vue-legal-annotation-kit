@@ -20,6 +20,7 @@ const props = defineProps<{
   selectedDocumentAnnotationId: number | null;
   linkingFrom: number | null;
   readonly?: boolean;
+  relationLabels?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -124,6 +125,7 @@ const setSelectionMetadata = (value: string) => {
       <DocumentRelationList
         v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
         :readonly="readonly"
+        :relation-labels="relationLabels"
         :relations="documentRelations"
         :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"
@@ -177,6 +179,7 @@ const setSelectionMetadata = (value: string) => {
         :annotations="annotations"
         :colors="colors"
         :readonly="readonly"
+        :relation-labels="relationLabels"
         @remove="(from, to) => emit('remove-relation', from, to)"
         @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
         @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"

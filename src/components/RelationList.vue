@@ -9,6 +9,8 @@ const props = defineProps<{
   annotations: Annotation[];
   colors: Record<string, string>;
   readonly?: boolean;
+  /** Labels a relation can be given. */
+  relationLabels?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -52,7 +54,7 @@ const nextDirection = (d: RelationDirection): RelationDirection =>
   d === "right" ? "left" : d === "left" ? "bi" : "right";
 
 const available = (labels: string[]) =>
-  RELATION_LABELS.filter((l) => !labels.includes(l));
+  (props.relationLabels ?? RELATION_LABELS).filter((l) => !labels.includes(l));
 
 const addLabel = (row: Row, label: string) => {
   if (label) emit("set-labels", row.from, row.to, [...row.labels, label]);

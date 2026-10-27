@@ -17,6 +17,8 @@ const props = defineProps<{
   otherDocuments: DocumentRef[];
   /** Show the relations without letting anything change. */
   readonly?: boolean;
+  /** Labels a relation can be given. */
+  relationLabels?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -26,7 +28,7 @@ const emit = defineEmits<{
 }>();
 
 const available = (labels: string[]) =>
-  RELATION_LABELS.filter((l) => !labels.includes(l));
+  (props.relationLabels ?? RELATION_LABELS).filter((l) => !labels.includes(l));
 
 // Only documents not already related to can be added as a new target.
 const addable = () => {
