@@ -15,6 +15,8 @@ const props = withDefaults(
     labelset: Labelset;
     annotationLevel: AnnotationLevel;
     guidelinesUrl?: string;
+    /** Labels relations can be given; defaults to the built-in set. */
+    relationLabels?: string[];
     startPosition?: number;
     /**
      * Query param the current position round-trips through, or `false` for a
@@ -142,6 +144,7 @@ const onNext = (assignment: Assignment) =>
       :incoming-relations="incomingRelations"
       :position="queuePosition"
       :guidelines-url="guidelinesUrl"
+      :relation-labels="relationLabels"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"

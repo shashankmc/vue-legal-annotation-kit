@@ -292,6 +292,7 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` | `urlParam` | `"seq"` | Query param the position is kept in; `false` when the host's router owns the URL. |
 | `AnnotatorView` | `navigation` | `true` | Progress and Back/Next. Off to show one document with just Save. |
 | `AnnotatorView` | `readonly` | `false` | Show annotations without letting anything change; no Save, no draft. |
+| `AnnotatorQueue` / `AnnotatorView` | `relationLabels` | the built-in eight | Labels a relation (span or document) can be given. Labels already on a relation stay shown even if not in the list. |
 
 ---
 
