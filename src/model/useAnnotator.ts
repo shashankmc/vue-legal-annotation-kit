@@ -55,11 +55,11 @@ export function useAnnotator(
 
   /** Toggle a whole-document label: adds it if absent, removes it if already
    * applied. Document-level tags carry no offsets, so there is no "same range"
-   * duplicate rule — just one entry per label. */
+   * duplicate rule — just one entry per label, keyed by the label itself. */
   function toggleDocumentLabel(label: Label) {
     const existing = documentAnnotations.value.find((d) => d.label === label.name);
     if (existing) {
-      documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== existing.id);
+      documentAnnotations.value = documentAnnotations.value.filter((d) => d.label !== label.name);
       if (selectedDocumentAnnotationId.value === existing.id) selectedDocumentAnnotationId.value = null;
     } else {
       const tag: DocumentAnnotation = {

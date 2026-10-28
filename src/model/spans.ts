@@ -22,7 +22,10 @@ export function isDuplicate(
  * with real database ids until the row is persisted). Shared by annotations
  * and document-level annotations, each keeping their own id sequence. */
 export function nextTempId(items: { id: number }[]): number {
-  const min = items.reduce((m, a) => Math.min(m, a.id), 0);
+  // A host's given tags may carry no id at all (a bare `{ label }`), so a
+  // non-finite id must not poison the min — it would hand the new tag a NaN
+  // id, and every id-keyed lookup on it would silently never match.
+  const min = items.reduce((m, a) => Math.min(m, Number.isFinite(a.id) ? a.id : Infinity), 0);
   return Math.min(-1, min - 1);
 }
 
