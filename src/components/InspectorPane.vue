@@ -20,6 +20,8 @@ const props = defineProps<{
   selectedDocumentAnnotationId: number | null;
   linkingFrom: number | null;
   readonly?: boolean;
+  /** Whether the confidence rating on the selection card shows at all. */
+  showConfidence?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -75,6 +77,7 @@ const setSelectionMetadata = (value: string) => {
         <span v-if="selectedSpan" class="selection__text" :title="selectedSpan.text">{{ selectedSpan.text }}</span>
       </div>
       <StarRating
+        v-if="showConfidence"
         label="Confidence"
         :model-value="selection.confidence"
         :disabled="readonly"
@@ -92,8 +95,11 @@ const setSelectionMetadata = (value: string) => {
         />
       </label>
     </section>
-    <p v-else-if="!readonly && (documentLevel ? documentAnnotations.length : annotations.length)" class="selection__hint">
-      Select {{ documentLevel ? "a tag" : "an annotation" }} to rate it or add metadata.
+    <p
+      v-else-if="!readonly && (documentLevel ? documentAnnotations.length : annotations.length)"
+      class="selection__hint"
+    >
+      Select {{ documentLevel ? "a tag" : "an annotation" }} to {{ showConfidence ? "rate it or add" : "add" }} metadata.
     </p>
 
     <template v-if="documentLevel">

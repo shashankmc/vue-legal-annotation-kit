@@ -17,12 +17,19 @@ const props = withDefaults(
     guidelinesUrl?: string;
     startPosition?: number;
     /**
+     * Whether the annotator rates confidence (star ratings on spans, document
+     * tags and the assignment itself). Turn off for a host that does not need
+     * confidence values; the stars disappear and the stored values stay as
+     * the task carried them.
+     */
+    showConfidence?: boolean;
+    /**
      * Query param the current position round-trips through, or `false` for a
      * host whose router owns the URL and already means something else by it.
      */
     urlParam?: string | false;
   }>(),
-  { urlParam: "seq" },
+  { urlParam: "seq", showConfidence: true },
 );
 
 const emit = defineEmits<{
@@ -142,6 +149,7 @@ const onNext = (assignment: Assignment) =>
       :incoming-relations="incomingRelations"
       :position="queuePosition"
       :guidelines-url="guidelinesUrl"
+      :show-confidence="showConfidence"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"

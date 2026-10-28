@@ -41,13 +41,17 @@ const props = withDefaults(
     navigation?: boolean;
     /** Look, don't touch: no creating, editing, deleting or saving. */
     readonly?: boolean;
+    /** Whether confidence (star) ratings are shown at all: on the selection
+     * card, and on the assignment as Document Confidence. When hidden the
+     * stored confidence values are left exactly as the task carried them. */
+    showConfidence?: boolean;
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
     onNext?: AssignmentHandler;
     onPrevious?: AssignmentHandler;
   }>(),
-  { navigation: true, readonly: false },
+  { navigation: true, readonly: false, showConfidence: true },
 );
 
 // A task is either span-level or document-level, never both — this decides
@@ -343,6 +347,7 @@ onBeforeUnmount(() => {
         :active-label="activeLabel"
         :document-annotations="documentAnnotations"
         :guidelines-url="guidelinesUrl"
+        :show-confidence="showConfidence"
         :readonly="readonly"
         v-model:document-confidence="documentConfidence"
         @select="setActiveLabel"
@@ -372,6 +377,7 @@ onBeforeUnmount(() => {
         :selected-id="selectedId"
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
+        :show-confidence="showConfidence"
         :readonly="readonly"
         @select="onInspectorSelect"
         @set-metadata="setMetadata"

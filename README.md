@@ -291,6 +291,7 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` | `urlParam` | `"seq"` | Query param the position is kept in; `false` when the host's router owns the URL. |
 | `AnnotatorView` | `navigation` | `true` | Progress and Back/Next. Off to show one document with just Save. |
 | `AnnotatorView` | `readonly` | `false` | Show annotations without letting anything change; no Save, no draft. |
+| `AnnotatorQueue` / `AnnotatorView` | `showConfidence` | `true` | Confidence (star) ratings on, off. `false` hides every rating — per-span, per-tag and the assignment-level *Document Confidence* — and leaves the stored `confidence` values exactly as they were. For a host that does not need confidence values. |
 
 ---
 
