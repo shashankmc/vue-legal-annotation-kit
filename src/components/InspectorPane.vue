@@ -29,6 +29,8 @@ const props = defineProps<{
   documentRelationLabels?: string[];
   previewDocuments?: boolean;
   relationGraph?: boolean;
+  /** Whether the confidence rating on the selection card shows at all. */
+  showConfidence?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -100,6 +102,7 @@ const setSelectionMetadata = (value: string) => {
         <span v-if="selectedSpan" class="selection__text" :title="selectedSpan.text">{{ selectedSpan.text }}</span>
       </div>
       <StarRating
+        v-if="showConfidence"
         label="Confidence"
         :model-value="selection.confidence"
         :disabled="readonly"
@@ -118,7 +121,7 @@ const setSelectionMetadata = (value: string) => {
       </label>
     </section>
     <p v-else-if="!readonly && hasAnything" class="selection__hint">
-      Select {{ selectionNoun }} to rate it or add metadata.
+      Select {{ selectionNoun }} to {{ showConfidence ? "rate it or add" : "add" }} metadata.
     </p>
 
     <template v-if="!documentLevel">

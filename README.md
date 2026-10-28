@@ -372,6 +372,7 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` / `AnnotatorView` | `documentRelationLabels` | `relationLabels` | Labels **document** relations can be given, when they should differ from the span relations'. A host with a separate document labelset (a hybrid task) can pass that labelset's own list here, or `RELATION_LABELS` for the built-in eight. |
 | `AnnotatorQueue` / `AnnotatorView` | `previewDocuments` | `false` | Adds a **Read more** button to documents in the document-relation picker and list. See [Document-relation actions](#document-relation-actions). |
 | `AnnotatorQueue` / `AnnotatorView` | `relationGraph` | `false` | Adds a **View as graph** button to the document relations. See [Document-relation actions](#document-relation-actions). |
+| `AnnotatorQueue` / `AnnotatorView` | `showConfidence` | `true` | Confidence (star) ratings on, off. `false` hides every rating — per-span, per-tag and the assignment-level *Document Confidence* — and leaves the stored `confidence` values exactly as they were. For a host that does not need confidence values. |
 
 ---
 

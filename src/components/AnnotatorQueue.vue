@@ -32,12 +32,19 @@ const props = withDefaults(
     relationGraph?: boolean;
     startPosition?: number;
     /**
+     * Whether the annotator rates confidence (star ratings on spans, document
+     * tags and the assignment itself). Turn off for a host that does not need
+     * confidence values; the stars disappear and the stored values stay as
+     * the task carried them.
+     */
+    showConfidence?: boolean;
+    /**
      * Query param the current position round-trips through, or `false` for a
      * host whose router owns the URL and already means something else by it.
      */
     urlParam?: string | false;
   }>(),
-  { urlParam: "seq" },
+  { urlParam: "seq", showConfidence: true },
 );
 
 const emit = defineEmits<{
@@ -168,6 +175,7 @@ const onNext = (assignment: Assignment) =>
       :relation-graph="relationGraph"
       @view-document="emit('view-document', $event)"
       @view-relation-graph="emit('view-relation-graph', $event)"
+      :show-confidence="showConfidence"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"

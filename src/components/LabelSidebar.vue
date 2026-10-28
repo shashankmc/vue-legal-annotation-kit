@@ -18,6 +18,8 @@ const props = defineProps<{
   guidelinesUrl?: string;
   /** Show the labels and ratings without letting anything change. */
   readonly?: boolean;
+  /** Whether the confidence rating shows at all; off hides it entirely. */
+  showConfidence?: boolean;
 }>();
 
 defineEmits<{
@@ -89,7 +91,7 @@ const isDocumentTagged = (label: Label) =>
       </section>
     </div>
 
-    <div class="sidebar__confidence">
+    <div v-if="showConfidence" class="sidebar__confidence">
       <StarRating
         label="Document Confidence"
         :model-value="documentConfidence"

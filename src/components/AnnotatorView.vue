@@ -56,13 +56,17 @@ const props = withDefaults(
     /** Offer a "View as graph" button on the document relations. The view only
      * emits `view-relation-graph`; drawing it is up to the host. */
     relationGraph?: boolean;
+    /** Whether confidence (star) ratings are shown at all: on the selection
+     * card, and on the assignment as Document Confidence. When hidden the
+     * stored confidence values are left exactly as the task carried them. */
+    showConfidence?: boolean;
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
     onNext?: AssignmentHandler;
     onPrevious?: AssignmentHandler;
   }>(),
-  { navigation: true, readonly: false },
+  { navigation: true, readonly: false, showConfidence: true },
 );
 
 // A task is span-level, document-level, or hybrid (span-level plus a separate
@@ -388,6 +392,7 @@ onBeforeUnmount(() => {
         :document-annotations="documentAnnotations"
         :document-labels="isHybrid ? documentLabelset?.labels : undefined"
         :guidelines-url="guidelinesUrl"
+        :show-confidence="showConfidence"
         :readonly="readonly"
         v-model:document-confidence="documentConfidence"
         @select="toggleActiveLabel"
@@ -419,6 +424,7 @@ onBeforeUnmount(() => {
         :selected-id="selectedId"
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
+        :show-confidence="showConfidence"
         :readonly="readonly"
         :relation-labels="relationLabels"
         :document-relation-labels="documentRelationLabels"
