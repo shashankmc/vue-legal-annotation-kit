@@ -50,7 +50,9 @@ The package must support everything the current tool does:
 - A shared **label set** (`labelset`) defines the available labels, each with a
   `name` and a `color`.
 - Labels are assigned **hotkeys** in list order: `1`–`9`, then `0`, then `A`–`Z`
-  (36 in all). Pressing the active label's key, or clicking it, puts it down.
+  (36 in all). Pressing the active label's key, or clicking it, puts it down. In a
+  [hybrid task](#hybrid-tasks) the document tags' keys continue the same
+  sequence, right after the span labels'.
 - **Overlap rules:** labels **may overlap** freely, with one exception — the **same
   label may not be applied to the exact same `start`+`end` range twice**. The
   uniqueness key for a span is effectively `(label, start, end)`.
@@ -180,11 +182,21 @@ The package's input/output is a single JSON document. **Preserve this structure.
 ### Hybrid tasks
 A span-level task with a `document_labelset` is hybrid: the annotator marks spans
 with `labelset` labels (hotkeys, relations, as usual) and tags the whole document
-with `document_labelset` labels (click to toggle, no hotkeys). Both lists are
+with `document_labelset` labels (click to toggle). Both lists are
 filled on the same assignment, both labelsets may share label names (even be the
 same labelset), and span relations and `document_relations` both work. Pass the
 second labelset as the `documentLabelset` prop of `AnnotatorQueue` / `AnnotatorView`.
 Label colours are looked up per labelset, so a shared name can have two colours.
+
+In the left column the **Document Tags** come right after the **Span Labels**,
+under a divider, and everything label-related scrolls as one list above the
+document confidence (which stays in view). The tags have **hotkeys too, starting
+where the span labels' end**: with 10 span labels (`1`–`0`) the first tag is `A`,
+the next `B`, and so on up to `Z`. Pressing a tag's key toggles that tag (it has
+nothing to arm, unlike a span label), and each key is shown on its tag. Keys run
+out after 36 labels and tags together; beyond that a tag is click-only. (A
+document-level task has no hotkeys.) The mapping is the pure function
+`hotkeyTarget` in `model/labelHotkeys.ts`.
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
@@ -283,6 +295,55 @@ the package never talks to a backend directly. Two factories ship:
   delegate/backend** (e.g. Supabase Row Level Security scoped to the authenticated
   user), not in this package — it only ever calls whatever `delegate` it's given.
 
+### Document-relation actions
+
+Where document relations exist (document-level and hybrid tasks, with
+`listDocuments` provided), the annotator can ask for two things the package
+cannot do on its own. It does not do them: it **emits a request** and the host
+decides what to show, so each host can use its own modal, drawer or page, and
+load the data however it likes. Both are off until the host opts in with the
+props above.
+
+| Event (on `AnnotatorQueue` and `AnnotatorView`) | Payload | When |
+|---|---|---|
+| `view-document` | `DocumentRef` (`{ name, order, key? }`) | **Read more** was clicked on a document, in the picker (to see what a target is *before* relating to it) or on an existing relation. The host typically shows the full text, fetching it by `key` (or `name`). |
+| `view-relation-graph` | `RelationGraphRequest` | **View as graph** was clicked. |
+
+```ts
+interface RelationGraphRequest {
+  document: DocumentRef;                  // the document being annotated
+  relations: DocumentRelation[];          // its outgoing relations right now, unsaved edits included
+  incomingRelations: IncomingRelation[];  // other documents' relations pointing at it
+}
+```
+
+The request carries only what is on screen. Relations among the *other*
+documents are stored on those documents, so a host that wants the whole graph
+loads them itself; the request tells it which document is open and what has
+been edited but not saved yet, so it can draw that over what it loaded.
+
+```vue
+<AnnotatorQueue
+  :source="source"
+  :labelset="labelset"
+  :document-labelset="documentLabelset"
+  annotation-level="word"
+  preview-documents
+  relation-graph
+  @view-document="(doc) => openTextModal(doc.key ?? doc.name)"
+  @view-relation-graph="(request) => openGraphModal(request)"
+/>
+```
+
+### Choosing a relation target
+
+The "link to a document…" control is a searchable dropdown: type to narrow a
+long queue down. Every word typed must appear in the document's name or queue
+position (any case, any order), so `ruling 12` finds `ruling-a.html (#12)`. Use
+the arrow keys and Enter, or the mouse. The matching is exported as
+`searchDocuments(documents, query)` for hosts that want the same behaviour
+elsewhere.
+
 ### Saving and failures
 
 `save` (and Back/Next, which save first) is awaited. Until it resolves, the
@@ -303,6 +364,8 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorView` | `navigation` | `true` | Progress and Back/Next. Off to show one document with just Save. |
 | `AnnotatorView` | `readonly` | `false` | Show annotations without letting anything change; no Save, no draft. |
 | `AnnotatorQueue` / `AnnotatorView` | `relationLabels` | the built-in eight | Labels a relation (span or document) can be given. Labels already on a relation stay shown even if not in the list. |
+| `AnnotatorQueue` / `AnnotatorView` | `previewDocuments` | `false` | Adds a **Read more** button to documents in the document-relation picker and list. See [Document-relation actions](#document-relation-actions). |
+| `AnnotatorQueue` / `AnnotatorView` | `relationGraph` | `false` | Adds a **View as graph** button to the document relations. See [Document-relation actions](#document-relation-actions). |
 
 ---
 

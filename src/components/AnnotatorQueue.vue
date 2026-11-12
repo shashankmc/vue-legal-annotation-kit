@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import type { AnnotationSource, DocumentRef, IncomingRelation } from "../model/source";
+import type {
+  AnnotationSource,
+  DocumentRef,
+  IncomingRelation,
+  RelationGraphRequest,
+} from "../model/source";
 import { documentKey } from "../model/source";
 import type { AnnotationLevel, Assignment, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
@@ -19,6 +24,10 @@ const props = withDefaults(
     guidelinesUrl?: string;
     /** Labels relations can be given; defaults to the built-in set. */
     relationLabels?: string[];
+    /** Offer "Read more" on documents when relating them; see AnnotatorView. */
+    previewDocuments?: boolean;
+    /** Offer "View as graph" on the document relations; see AnnotatorView. */
+    relationGraph?: boolean;
     startPosition?: number;
     /**
      * Query param the current position round-trips through, or `false` for a
@@ -36,6 +45,10 @@ const emit = defineEmits<{
   "save-error": [error: unknown];
   /** Whether the open document has work not yet saved — for a route guard. */
   unsaved: [value: boolean];
+  /** The annotator asked to read this document (a relation target). */
+  "view-document": [document: DocumentRef];
+  /** The annotator asked to see the document relations as a graph. */
+  "view-relation-graph": [request: RelationGraphRequest];
 }>();
 
 // The current position round-trips through the URL (`seq` by default), so a
@@ -148,6 +161,10 @@ const onNext = (assignment: Assignment) =>
       :position="queuePosition"
       :guidelines-url="guidelinesUrl"
       :relation-labels="relationLabels"
+      :preview-documents="previewDocuments"
+      :relation-graph="relationGraph"
+      @view-document="emit('view-document', $event)"
+      @view-relation-graph="emit('view-relation-graph', $event)"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"

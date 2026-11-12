@@ -4,6 +4,7 @@ export { default as AnnotatorQueue } from "./components/AnnotatorQueue.vue";
 export { default as StarRating } from "./components/StarRating.vue";
 export * from "./types";
 export * from "./model/source";
+export { searchDocuments, documentLabel } from "./model/documentSearch";
 export { useAssignmentQueue } from "./model/useAssignmentQueue";
 export { createBulkSource } from "./model/bulkSource";
 export { createLazySource } from "./model/lazySource";

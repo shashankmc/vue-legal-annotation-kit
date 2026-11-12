@@ -3,6 +3,8 @@ import type { DocumentRelation } from "../types";
 import type { DocumentRef, IncomingRelation } from "../model/source";
 import { documentKey } from "../model/source";
 import { RELATION_LABELS } from "../types";
+import { documentLabel } from "../model/documentSearch";
+import DocumentPicker from "./DocumentPicker.vue";
 
 // Document-level counterpart to RelationList: the current document's own
 // outgoing relations to other whole documents, plus a read-only "Linked by"
@@ -19,12 +21,22 @@ const props = defineProps<{
   readonly?: boolean;
   /** Labels a relation can be given. */
   relationLabels?: string[];
+  /** Offer "Read more" on documents, so the annotator can see what a target is
+   * before relating to it. The package only emits `view-document`. */
+  previewDocuments?: boolean;
+  /** Offer a button to see the relations as a graph. The package only emits
+   * `view-graph`. */
+  relationGraph?: boolean;
 }>();
 
 const emit = defineEmits<{
   add: [toName: string];
   remove: [toName: string];
   "set-labels": [toName: string, labels: string[]];
+  /** The annotator asked to read this document. */
+  "view-document": [document: DocumentRef];
+  /** The annotator asked to see the relations as a graph. */
+  "view-graph": [];
 }>();
 
 const available = (labels: string[]) =>
@@ -36,18 +48,11 @@ const addable = () => {
   return props.otherDocuments.filter((d) => !taken.has(documentKey(d)));
 };
 
-// What a document is called in this list: its name and queue position, which
-// also tells apart documents that share a name — including one that shares
-// the open document's name. A relation whose target is not among
-// otherDocuments shows what it stores.
-const label = (d: DocumentRef) => `${d.name} (#${d.order})`;
+// A relation whose target is not among otherDocuments shows what it stores.
+const targetOf = (to: string) => props.otherDocuments.find((o) => documentKey(o) === to);
 const targetLabel = (to: string) => {
-  const d = props.otherDocuments.find((o) => documentKey(o) === to);
-  return d ? label(d) : to;
-};
-
-const addRelation = (name: string) => {
-  if (name) emit("add", name);
+  const d = targetOf(to);
+  return d ? documentLabel(d) : to;
 };
 const addLabel = (rel: DocumentRelation, label: string) => {
   if (label) emit("set-labels", rel.to, [...rel.labels, label]);
@@ -58,13 +63,33 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 
 <template>
   <div class="doc-relations">
-    <h4 class="doc-relations__title">Document Relations ({{ relations.length }})</h4>
+    <div class="doc-relations__head">
+      <h4 class="doc-relations__title">Document Relations ({{ relations.length }})</h4>
+      <button
+        v-if="relationGraph"
+        type="button"
+        class="doc-relations__graph"
+        title="See the document relations as a graph"
+        @click="emit('view-graph')"
+      >
+        View as graph
+      </button>
+    </div>
 
     <ul class="rel-list">
       <li v-for="rel in relations" :key="rel.to" class="rel">
         <div class="rel__ends">
           <span class="rel__arrow" aria-hidden="true">→</span>
           <span class="rel__end" :title="targetLabel(rel.to)">{{ targetLabel(rel.to) }}</span>
+          <button
+            v-if="previewDocuments && targetOf(rel.to)"
+            type="button"
+            class="rel__read"
+            title="Read this document"
+            @click="emit('view-document', targetOf(rel.to)!)"
+          >
+            Read more
+          </button>
           <button v-if="!readonly" class="rel__del" title="Remove relation" @click="emit('remove', rel.to)">
             🗑
           </button>
@@ -89,15 +114,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
       <li v-if="!relations.length" class="rel-list__empty">No document relations yet.</li>
     </ul>
 
-    <select
+    <DocumentPicker
       v-if="!readonly && addable().length"
-      class="doc-relations__add"
-      value=""
-      @change="addRelation(($event.target as HTMLSelectElement).value)"
-    >
-      <option value="">+ link to a document…</option>
-      <option v-for="d in addable()" :key="documentKey(d)" :value="documentKey(d)">{{ label(d) }}</option>
-    </select>
+      :options="addable()"
+      :previewable="previewDocuments"
+      @select="emit('add', $event)"
+      @preview="emit('view-document', $event)"
+    />
 
     <template v-if="incomingRelations.length">
       <h4 class="doc-relations__title doc-relations__title--incoming">
@@ -129,9 +152,38 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   padding-top: 0.75rem;
   border-top: 1px solid var(--lak-border);
 }
+.doc-relations__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
 .doc-relations__title {
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
+}
+.doc-relations__graph,
+.rel__read {
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--lak-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--lak-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.doc-relations__graph:hover,
+.rel__read:hover {
+  background: var(--lak-accent);
+  color: #fff;
+}
+.rel__read {
+  margin-left: auto;
+}
+.rel__read + .rel__del {
+  margin-left: 0;
 }
 .doc-relations__title--incoming {
   margin-top: 1rem;
@@ -220,17 +272,6 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
-}
-.doc-relations__add {
-  margin-top: 0.6rem;
-  font: inherit;
-  font-size: 0.8rem;
-  padding: 0.3rem 0.4rem;
-  border: 1px dashed var(--lak-border);
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  width: 100%;
 }
 .rel-list__empty {
   color: var(--lak-muted);

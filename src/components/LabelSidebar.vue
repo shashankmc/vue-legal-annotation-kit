@@ -13,7 +13,7 @@ const props = defineProps<{
   activeLabel: Label | null;
   documentConfidence: number;
   documentAnnotations: DocumentAnnotation[];
-  /** Hybrid tasks: the document-tag labels, shown under the span labels. */
+  /** Hybrid tasks: the document-tag labels, shown right after the span labels. */
   documentLabels?: Label[];
   guidelinesUrl?: string;
   /** Show the labels and ratings without letting anything change. */
@@ -31,6 +31,10 @@ defineEmits<{
 const tagLabels = computed(() => (props.documentLevel ? props.labels : (props.documentLabels ?? [])));
 const hybrid = computed(() => !props.documentLevel && tagLabels.value.length > 0);
 
+// In a hybrid task the tags' keys carry on where the span labels' end, so one
+// key press never means two things (see hotkeyTarget in model/labelHotkeys).
+const tagKey = (index: number) => (hybrid.value ? labelHotkey(props.labels.length + index) : "");
+
 const isDocumentTagged = (label: Label) =>
   props.documentAnnotations.some((d) => d.label === label.name);
 </script>
@@ -45,39 +49,44 @@ const isDocumentTagged = (label: Label) =>
       <hr class="sidebar__divider" />
     </template>
 
-    <h4 v-if="hybrid" class="sidebar__doc-tags-title">Span Labels</h4>
-    <ul v-if="!documentLevel" class="labels">
-      <li
-        v-for="(label, i) in labels"
-        :key="label.name"
-        class="label"
-        :class="{ 'is-active': label.name === activeLabel?.name, 'is-readonly': readonly }"
-        @click="!readonly && $emit('select', label)"
-      >
-        <span class="label__swatch" :style="{ background: label.color }" />
-        <span class="label__name">{{ label.name }}</span>
-        <span v-if="labelHotkey(i)" class="label__key">{{ labelHotkey(i).toUpperCase() }}</span>
-      </li>
-    </ul>
-
-    <div
-      v-if="documentLevel || hybrid"
-      class="sidebar__doc-tags"
-      :class="{ 'sidebar__doc-tags--hybrid': hybrid }"
-    >
-      <h4 class="sidebar__doc-tags-title">Document Tags</h4>
-      <ul class="doc-tags">
+    <!-- Everything label-related scrolls together, span labels and then the
+         tags under them, so nothing is squeezed however many there are. -->
+    <div class="sidebar__scroll">
+      <h4 v-if="hybrid" class="sidebar__section-title">Span Labels</h4>
+      <ul v-if="!documentLevel" class="labels">
         <li
-          v-for="label in tagLabels"
+          v-for="(label, i) in labels"
           :key="label.name"
-          class="doc-tag"
-          :class="{ 'is-tagged': isDocumentTagged(label), 'is-readonly': readonly }"
-          @click="!readonly && $emit('toggle-document-label', label)"
+          class="label"
+          :class="{ 'is-active': label.name === activeLabel?.name, 'is-readonly': readonly }"
+          @click="!readonly && $emit('select', label)"
         >
-          <span class="doc-tag__swatch" :style="{ background: label.color }" />
-          <span class="doc-tag__name">{{ label.name }}</span>
+          <span class="label__swatch" :style="{ background: label.color }" />
+          <span class="label__name">{{ label.name }}</span>
+          <span v-if="labelHotkey(i)" class="label__key">{{ labelHotkey(i).toUpperCase() }}</span>
         </li>
       </ul>
+
+      <section
+        v-if="documentLevel || hybrid"
+        class="sidebar__doc-tags"
+        :class="{ 'sidebar__doc-tags--hybrid': hybrid }"
+      >
+        <h4 class="sidebar__section-title">Document Tags</h4>
+        <ul class="doc-tags">
+          <li
+            v-for="(label, i) in tagLabels"
+            :key="label.name"
+            class="doc-tag"
+            :class="{ 'is-tagged': isDocumentTagged(label), 'is-readonly': readonly }"
+            @click="!readonly && $emit('toggle-document-label', label)"
+          >
+            <span class="doc-tag__swatch" :style="{ background: label.color }" />
+            <span class="doc-tag__name">{{ label.name }}</span>
+            <span v-if="tagKey(i)" class="doc-tag__key">{{ tagKey(i).toUpperCase() }}</span>
+          </li>
+        </ul>
+      </section>
     </div>
 
     <div class="sidebar__confidence">
@@ -92,8 +101,8 @@ const isDocumentTagged = (label: Label) =>
 </template>
 
 <style scoped>
-/* Only the label list scrolls; the guidelines link above it and the document
-   confidence below it stay in view however many labels there are. */
+/* The guidelines link above and the document confidence below stay in view; the
+   labels between them scroll as one. */
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -102,24 +111,19 @@ const isDocumentTagged = (label: Label) =>
   min-height: 0;
   overflow: hidden;
 }
-.sidebar__doc-tags {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.sidebar__doc-tags--hybrid {
-  flex: 0 1 auto;
-  max-height: 45%;
-  margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--lak-border);
-}
-.labels,
-.doc-tags {
+.sidebar__scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Air under the last label, so that however far it is scrolled the last pill
+     never touches the confidence divider below. */
+  padding-bottom: 0.75rem;
+}
+.sidebar__doc-tags--hybrid {
+  /* The delimiter between the span labels and the tags under them. */
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--lak-border);
 }
 .guidelines-link {
   display: flex;
@@ -140,6 +144,11 @@ const isDocumentTagged = (label: Label) =>
   border: none;
   border-top: 1px solid var(--lak-border);
   margin: 0 0 0.6rem;
+}
+.sidebar__section-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--lak-muted);
 }
 .labels {
   list-style: none;
@@ -182,17 +191,13 @@ const isDocumentTagged = (label: Label) =>
 .label__name {
   flex: 1;
 }
-.label__key {
+.label__key,
+.doc-tag__key {
   font-size: 0.75rem;
   color: var(--lak-muted);
   background: rgba(0, 0, 0, 0.08);
   border-radius: 4px;
   padding: 0 0.35rem;
-}
-.sidebar__doc-tags-title {
-  margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  color: var(--lak-muted);
 }
 .doc-tags {
   list-style: none;
@@ -222,15 +227,21 @@ const isDocumentTagged = (label: Label) =>
   border-color: var(--lak-accent);
   color: #fff;
 }
+.doc-tag.is-tagged .doc-tag__key {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
 .doc-tag__swatch {
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 3px;
   flex-shrink: 0;
 }
+.doc-tag__key {
+  font-size: 0.7rem;
+}
 .sidebar__confidence {
   flex-shrink: 0;
-  margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px solid var(--lak-border);
   display: flex;
