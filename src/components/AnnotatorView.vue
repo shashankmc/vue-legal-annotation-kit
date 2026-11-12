@@ -17,7 +17,7 @@ import InspectorPane from "./InspectorPane.vue";
 import ConfirmModal from "./ConfirmModal.vue";
 import { useAnnotator } from "../model/useAnnotator";
 import { snapToLevel } from "../model/spans";
-import { labelIndexForKey } from "../model/labelHotkeys";
+import { hotkeyTarget } from "../model/labelHotkeys";
 import { loadDraft, saveDraft, clearDraft } from "../model/localDraft";
 
 /** Hands the assignment to the host. May return a promise: the view waits
@@ -295,8 +295,9 @@ const flashSaved = () => {
   }, 1400);
 };
 
-// A label's key (shown beside it) arms it. Only meaningful for span tasks —
-// document-level tags have nothing to arm.
+// A label's key (shown beside it) arms it; in a hybrid task the document tags'
+// keys continue where the span labels' end, and pressing one toggles that tag.
+// Document-level tasks have nothing to arm, so no keys.
 const onKey = (e: KeyboardEvent) => {
   if (isDocumentLevel.value || props.readonly) return;
   const el = e.target as HTMLElement | null;
@@ -308,11 +309,15 @@ const onKey = (e: KeyboardEvent) => {
     ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName ?? "")
   )
     return;
-  const label = props.labelset.labels[labelIndexForKey(e.key)];
-  if (label) {
-    toggleActiveLabel(label);
-    e.preventDefault();
-  }
+  const target = hotkeyTarget(
+    e.key,
+    props.labelset.labels.length,
+    isHybrid.value ? (props.documentLabelset?.labels.length ?? 0) : 0,
+  );
+  if (!target) return;
+  if (target.kind === "span") toggleActiveLabel(props.labelset.labels[target.index]);
+  else toggleDocumentLabel(props.documentLabelset!.labels[target.index]);
+  e.preventDefault();
 };
 
 // The graph request carries what is on screen — including relations not saved

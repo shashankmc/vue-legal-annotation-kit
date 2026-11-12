@@ -15,19 +15,19 @@ const task = toTaskData(rawTask as any);
 
 // `?hybrid` in the URL turns the demo into a hybrid task: span labels from the
 // file plus a separate set of document tags.
-const hybrid = new URLSearchParams(window.location.search).has("hybrid");
-const documentLabelset = hybrid
-  ? {
-      name: "Document tags",
-      desc: "",
-      labels: [
-        { name: "Relevant", color: "#0ea5e9" },
-        { name: "Needs review", color: "#f97316" },
-      ],
-    }
-  : undefined;
+// `?hybrid&many` adds enough tags to make the label list scroll.
+const params = new URLSearchParams(window.location.search);
+const hybrid = params.has("hybrid");
+const tagLabels = [
+  { name: "Relevant", color: "#0ea5e9" },
+  { name: "Needs review", color: "#f97316" },
+  ...(params.has("many")
+    ? Array.from({ length: 14 }, (_, i) => ({ name: `Extra tag ${i + 1}`, color: `hsl(${i * 25}, 60%, 50%)` }))
+    : []),
+];
+const documentLabelset = hybrid ? { name: "Document tags", desc: "", labels: tagLabels } : undefined;
 
-const source = createBulkSource(task, 1, hybrid ? "lak:bulk:dev-hybrid" : undefined);
+const source = createBulkSource(task, 1, hybrid ? `lak:bulk:dev-hybrid${params.has("many") ? "-many" : ""}` : undefined);
 
 // const bundles = flattenAssignments(task, 1);
 // const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));

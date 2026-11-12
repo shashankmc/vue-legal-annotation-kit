@@ -50,7 +50,9 @@ The package must support everything the current tool does:
 - A shared **label set** (`labelset`) defines the available labels, each with a
   `name` and a `color`.
 - Labels are assigned **hotkeys** in list order: `1`–`9`, then `0`, then `A`–`Z`
-  (36 in all). Pressing the active label's key, or clicking it, puts it down.
+  (36 in all). Pressing the active label's key, or clicking it, puts it down. In a
+  [hybrid task](#hybrid-tasks) the document tags' keys continue the same
+  sequence, right after the span labels'.
 - **Overlap rules:** labels **may overlap** freely, with one exception — the **same
   label may not be applied to the exact same `start`+`end` range twice**. The
   uniqueness key for a span is effectively `(label, start, end)`.
@@ -180,11 +182,21 @@ The package's input/output is a single JSON document. **Preserve this structure.
 ### Hybrid tasks
 A span-level task with a `document_labelset` is hybrid: the annotator marks spans
 with `labelset` labels (hotkeys, relations, as usual) and tags the whole document
-with `document_labelset` labels (click to toggle, no hotkeys). Both lists are
+with `document_labelset` labels (click to toggle). Both lists are
 filled on the same assignment, both labelsets may share label names (even be the
 same labelset), and span relations and `document_relations` both work. Pass the
 second labelset as the `documentLabelset` prop of `AnnotatorQueue` / `AnnotatorView`.
 Label colours are looked up per labelset, so a shared name can have two colours.
+
+In the left column the **Document Tags** come right after the **Span Labels**,
+under a divider, and everything label-related scrolls as one list above the
+document confidence (which stays in view). The tags have **hotkeys too, starting
+where the span labels' end**: with 10 span labels (`1`–`0`) the first tag is `A`,
+the next `B`, and so on up to `Z`. Pressing a tag's key toggles that tag (it has
+nothing to arm, unlike a span label), and each key is shown on its tag. Keys run
+out after 36 labels and tags together; beyond that a tag is click-only. (A
+document-level task has no hotkeys.) The mapping is the pure function
+`hotkeyTarget` in `model/labelHotkeys.ts`.
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |
