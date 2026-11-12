@@ -8,6 +8,8 @@ const props = withDefaults(
     status: AssignmentStatus;
     position: QueuePosition;
     annotationLevel: AnnotationLevel;
+    /** Hybrid task: span annotations and document tags in the same task. */
+    hybrid?: boolean;
     documentName: string;
     /** Whether there's anything the Save button hasn't captured yet. */
     unsaved?: boolean;
@@ -45,7 +47,9 @@ const percent = () =>
   <header class="header">
     <div class="header__left">
       <span class="header__doc-name" :title="documentName">{{ documentName }}</span>
-      <span class="badge badge--level">{{ LEVEL_LABELS[annotationLevel] }}</span>
+      <span class="badge badge--level">{{
+        hybrid ? `${LEVEL_LABELS[annotationLevel]} + Document tags` : LEVEL_LABELS[annotationLevel]
+      }}</span>
       <span v-if="status" class="badge" :class="status === 'done' ? 'badge--done' : 'badge--pending'">
         {{ status }}
       </span>

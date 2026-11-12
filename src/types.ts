@@ -3,7 +3,8 @@
 
 // "document" means the whole task is document-level tagging: documents carry
 // only `document_annotations`, never span `annotations`. The others describe
-// span granularity for span-level tasks.
+// span granularity for span-level tasks. A span-level task that is also given
+// a `document_labelset` is a hybrid task: it carries both kinds at once.
 export type AnnotationLevel = "character" | "word" | "sentence" | "paragraph" | "document";
 
 export type RelationDirection = "bi" | "left" | "right";
@@ -127,6 +128,9 @@ export interface TaskData {
   name: string;
   desc: string;
   labelset: Labelset;
+  /** Hybrid tasks: the labels for whole-document tags, alongside the span
+   * `labelset`. Only meaningful when `annotation_level` is a span granularity. */
+  document_labelset?: Labelset;
   ann_guidelines: string;
   documents: RawDocument[];
   annotation_level: AnnotationLevel;

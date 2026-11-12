@@ -11,7 +11,21 @@ import rawTask from "./input/Small Task.json";
 
 const task = toTaskData(rawTask as any);
 
-const source = createBulkSource(task, 1);
+// `?hybrid` in the URL turns the demo into a hybrid task: span labels from the
+// file plus a separate set of document tags.
+const hybrid = new URLSearchParams(window.location.search).has("hybrid");
+const documentLabelset = hybrid
+  ? {
+      name: "Document tags",
+      desc: "",
+      labels: [
+        { name: "Relevant", color: "#0ea5e9" },
+        { name: "Needs review", color: "#f97316" },
+      ],
+    }
+  : undefined;
+
+const source = createBulkSource(task, 1, hybrid ? "lak:bulk:dev-hybrid" : undefined);
 
 // const bundles = flattenAssignments(task, 1);
 // const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -63,6 +77,7 @@ const onComplete = () => console.log("complete!");
     v-if="source"
     :source="source"
     :labelset="task.labelset"
+    :document-labelset="documentLabelset"
     :annotation-level="task.annotation_level"
     :guidelines-url="task.ann_guidelines"
     @complete="onComplete"

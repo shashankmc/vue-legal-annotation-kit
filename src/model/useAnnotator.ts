@@ -49,6 +49,7 @@ export function useAnnotator(
     };
     annotations.value.push(annotation);
     selectedId.value = annotation.id;
+    selectedDocumentAnnotationId.value = null;
     dirty.value = true;
     return annotation;
   }
@@ -70,6 +71,7 @@ export function useAnnotator(
       };
       documentAnnotations.value.push(tag);
       selectedDocumentAnnotationId.value = tag.id;
+      selectedId.value = null;
     }
     dirty.value = true;
   }
@@ -82,6 +84,8 @@ export function useAnnotator(
 
   function selectDocumentAnnotation(id: number | null) {
     selectedDocumentAnnotationId.value = id;
+    // Hybrid tasks show both lists; only one thing is selected at a time.
+    if (id !== null) selectedId.value = null;
   }
 
   /** Set the free-text metadata of one document-level tag; blank clears it. */
@@ -140,6 +144,7 @@ export function useAnnotator(
 
   function select(id: number | null) {
     selectedId.value = id;
+    if (id !== null) selectedDocumentAnnotationId.value = null;
   }
 
   /** Clear the dirty flag once the current state has been handed off to save. */

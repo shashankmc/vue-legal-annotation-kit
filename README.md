@@ -124,11 +124,12 @@ The package's input/output is a single JSON document. **Preserve this structure.
 |---|---|---|
 | `name` | string | Project/task name. |
 | `desc` | string | Description. |
-| `labelset` | object | The shared label set (below). |
+| `labelset` | object | The shared label set (below). For a hybrid task, the *span* labels. |
+| `document_labelset` | object | Optional. Same shape as `labelset`. When present on a span-level task, the task is **hybrid** and these are the labels for whole-document tags. |
 | `ann_guidelines` | string (URL) | Linked by the *See Annotation Guidelines* button. |
 | `documents` | array | The documents to annotate (below). |
 | `counts` | object | **Derived** summary — see [Counts](#counts). |
-| `annotation_level` | string | `character` \| `word` \| `sentence` \| `paragraph` \| `document`. The first four are span granularities; `document` means the whole task is document-level tagging — see below. A task is one or the other, never both. For `word`/`sentence`/`paragraph`, a selection is snapped to cover the whole unit it touches — a partial drag over one word still captures (and stores) the entire word, sentence, or paragraph, not just what was dragged. Shown to the annotator as a badge in the header. |
+| `annotation_level` | string | `character` \| `word` \| `sentence` \| `paragraph` \| `document`. The first four are span granularities; `document` means the whole task is document-level tagging — see below. A task is span-level or document-level — unless it is a **hybrid** task (see below), which has span annotations *and* document tags. For `word`/`sentence`/`paragraph`, a selection is snapped to cover the whole unit it touches — a partial drag over one word still captures (and stores) the entire word, sentence, or paragraph, not just what was dragged. Shown to the annotator as a badge in the header. |
 
 ### `labelset`
 | Field | Type | Notes |
@@ -151,9 +152,9 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `order` | number | Position in that annotator's queue (drives Next/Back + progress). |
 | `status` | string | `done` \| `pending`. Shown as the header badge. |
 | `confidence` | number (0–5) | **Assignment-level confidence** stars (*Document Confidence* in the UI); `0` = unrated. |
-| `annotations` | array | The span annotations. Populated only when the task's `annotation_level` is a span granularity; always empty for `document`-level tasks. |
-| `document_annotations` | array | Whole-document tags (below). Populated only when `annotation_level` is `document`; always empty for span-level tasks. |
-| `document_relations` | array | Relations from this whole document to other whole documents (below). Document-level tasks only. |
+| `annotations` | array | The span annotations. Populated when the task's `annotation_level` is a span granularity; always empty for `document`-level tasks. |
+| `document_annotations` | array | Whole-document tags (below). Populated when `annotation_level` is `document`, or for a hybrid task (labels from `document_labelset`); always empty for plain span-level tasks. |
+| `document_relations` | array | Relations from this whole document to other whole documents (below). Document-level and hybrid tasks. |
 
 ### `documents[].assignments[].annotations[]`
 | Field | Type | Notes |
@@ -175,6 +176,15 @@ The package's input/output is a single JSON document. **Preserve this structure.
 | `label` | string | Must match a `labelset` label name. No `start`/`end`/`text` — it tags the whole document, not a span. At most one entry per label; toggled on/off in the UI. |
 | `confidence` | number (0–5) | **Per-tag confidence** stars; `0` = unrated. Distinct from the assignment-level `confidence` above, which rates the document as a whole. |
 | `metadata` | string \| null | Free-text notes on the tag, like a span's `metadata`. Optional. |
+
+### Hybrid tasks
+A span-level task with a `document_labelset` is hybrid: the annotator marks spans
+with `labelset` labels (hotkeys, relations, as usual) and tags the whole document
+with `document_labelset` labels (click to toggle, no hotkeys). Both lists are
+filled on the same assignment, both labelsets may share label names (even be the
+same labelset), and span relations and `document_relations` both work. Pass the
+second labelset as the `documentLabelset` prop of `AnnotatorQueue` / `AnnotatorView`.
+Label colours are looked up per labelset, so a shared name can have two colours.
 
 ### `...annotations[].relations[]`
 | Field | Type | Notes |

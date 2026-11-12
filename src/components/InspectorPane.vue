@@ -10,12 +10,16 @@ import DocumentRelationList from "./DocumentRelationList.vue";
 // annotator select, delete or link them.
 const props = defineProps<{
   documentLevel: boolean;
+  /** Hybrid task: span annotations and document tags are both listed. */
+  hybrid?: boolean;
   annotations: Annotation[];
   documentAnnotations: DocumentAnnotation[];
   documentRelations: DocumentRelation[];
   incomingRelations: IncomingRelation[];
   otherDocuments: DocumentRef[];
   colors: Record<string, string>;
+  /** Colours for document tags when they come from their own labelset. */
+  documentColors?: Record<string, string>;
   selectedId: number | null;
   selectedDocumentAnnotationId: number | null;
   linkingFrom: number | null;
@@ -49,8 +53,22 @@ const selectedSpan = computed(() =>
     ? null
     : (props.annotations.find((a) => a.id === props.selectedId) ?? null),
 );
+const tagColors = computed(() => props.documentColors ?? props.colors);
+const selectionColor = computed(() => {
+  if (selectedSpan.value) return props.colors[selectedSpan.value.label];
+  if (selectedTag.value) return tagColors.value[selectedTag.value.label];
+  return undefined;
+});
+const selectionNoun = computed(() =>
+  props.documentLevel ? "a tag" : props.hybrid ? "an annotation or tag" : "an annotation",
+);
+const hasAnything = computed(() =>
+  props.documentLevel
+    ? props.documentAnnotations.length
+    : props.annotations.length + (props.hybrid ? props.documentAnnotations.length : 0),
+);
 const selectedTag = computed(() =>
-  !props.documentLevel || props.selectedDocumentAnnotationId === null
+  props.selectedDocumentAnnotationId === null
     ? null
     : (props.documentAnnotations.find((d) => d.id === props.selectedDocumentAnnotationId) ?? null),
 );
@@ -69,9 +87,9 @@ const setSelectionMetadata = (value: string) => {
 
 <template>
   <aside class="inspector">
-    <section v-if="selection" class="selection" :style="{ '--region-color': colors[selection.label] }">
+    <section v-if="selection" class="selection" :style="{ '--region-color': selectionColor }">
       <div class="selection__head">
-        <span class="region__swatch" :style="{ background: colors[selection.label] }" />
+        <span class="region__swatch" :style="{ background: selectionColor }" />
         <span class="region__label">{{ selection.label }}</span>
         <span v-if="selectedSpan" class="selection__text" :title="selectedSpan.text">{{ selectedSpan.text }}</span>
       </div>
@@ -93,49 +111,11 @@ const setSelectionMetadata = (value: string) => {
         />
       </label>
     </section>
-    <p v-else-if="!readonly && (documentLevel ? documentAnnotations.length : annotations.length)" class="selection__hint">
-      Select {{ documentLevel ? "a tag" : "an annotation" }} to rate it or add metadata.
+    <p v-else-if="!readonly && hasAnything" class="selection__hint">
+      Select {{ selectionNoun }} to rate it or add metadata.
     </p>
 
-    <template v-if="documentLevel">
-      <h4 class="inspector__title">Document Tags ({{ documentAnnotations.length }})</h4>
-      <ul class="regions">
-        <li
-          v-for="d in documentAnnotations"
-          :key="d.id"
-          class="region"
-          :class="{ 'is-selected': d.id === selectedDocumentAnnotationId }"
-          :style="{ '--region-color': colors[d.label] }"
-          @click="emit('select-document-annotation', d.id)"
-        >
-          <span class="region__swatch" :style="{ background: colors[d.label] }" />
-          <span class="region__label">{{ d.label }}</span>
-          <button
-            v-if="!readonly"
-            class="region__act"
-            title="Remove"
-            @click.stop="emit('remove-document-annotation', d.id)"
-          >
-            🗑
-          </button>
-        </li>
-        <li v-if="!documentAnnotations.length" class="regions__empty">No document tags yet.</li>
-      </ul>
-
-      <DocumentRelationList
-        v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
-        :readonly="readonly"
-        :relation-labels="relationLabels"
-        :relations="documentRelations"
-        :incoming-relations="incomingRelations"
-        :other-documents="otherDocuments"
-        @add="emit('add-document-relation', $event)"
-        @remove="emit('remove-document-relation', $event)"
-        @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
-      />
-    </template>
-
-    <template v-else>
+    <template v-if="!documentLevel">
       <h4 class="inspector__title">Annotations ({{ annotations.length }})</h4>
 
       <ul class="regions">
@@ -183,6 +163,44 @@ const setSelectionMetadata = (value: string) => {
         @remove="(from, to) => emit('remove-relation', from, to)"
         @set-direction="(from, to, dir) => emit('set-relation-direction', from, to, dir)"
         @set-labels="(from, to, labels) => emit('set-relation-labels', from, to, labels)"
+      />
+    </template>
+
+    <template v-if="documentLevel || hybrid">
+      <h4 class="inspector__title">Document Tags ({{ documentAnnotations.length }})</h4>
+      <ul class="regions">
+        <li
+          v-for="d in documentAnnotations"
+          :key="d.id"
+          class="region"
+          :class="{ 'is-selected': d.id === selectedDocumentAnnotationId }"
+          :style="{ '--region-color': tagColors[d.label] }"
+          @click="emit('select-document-annotation', d.id)"
+        >
+          <span class="region__swatch" :style="{ background: tagColors[d.label] }" />
+          <span class="region__label">{{ d.label }}</span>
+          <button
+            v-if="!readonly"
+            class="region__act"
+            title="Remove"
+            @click.stop="emit('remove-document-annotation', d.id)"
+          >
+            🗑
+          </button>
+        </li>
+        <li v-if="!documentAnnotations.length" class="regions__empty">No document tags yet.</li>
+      </ul>
+
+      <DocumentRelationList
+        v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
+        :readonly="readonly"
+        :relation-labels="relationLabels"
+        :relations="documentRelations"
+        :incoming-relations="incomingRelations"
+        :other-documents="otherDocuments"
+        @add="emit('add-document-relation', $event)"
+        @remove="emit('remove-document-relation', $event)"
+        @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
       />
     </template>
   </aside>

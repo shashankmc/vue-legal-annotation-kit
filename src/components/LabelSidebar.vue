@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { DocumentAnnotation, Label } from "../types";
 import StarRating from "./StarRating.vue";
 import { labelHotkey } from "../model/labelHotkeys";
@@ -12,6 +13,8 @@ const props = defineProps<{
   activeLabel: Label | null;
   documentConfidence: number;
   documentAnnotations: DocumentAnnotation[];
+  /** Hybrid tasks: the document-tag labels, shown under the span labels. */
+  documentLabels?: Label[];
   guidelinesUrl?: string;
   /** Show the labels and ratings without letting anything change. */
   readonly?: boolean;
@@ -22,6 +25,11 @@ defineEmits<{
   "update:documentConfidence": [value: number];
   "toggle-document-label": [label: Label];
 }>();
+
+// Which labels the tag chips offer: the task's labels for a document-level
+// task, the separate document labelset for a hybrid one.
+const tagLabels = computed(() => (props.documentLevel ? props.labels : (props.documentLabels ?? [])));
+const hybrid = computed(() => !props.documentLevel && tagLabels.value.length > 0);
 
 const isDocumentTagged = (label: Label) =>
   props.documentAnnotations.some((d) => d.label === label.name);
@@ -37,6 +45,7 @@ const isDocumentTagged = (label: Label) =>
       <hr class="sidebar__divider" />
     </template>
 
+    <h4 v-if="hybrid" class="sidebar__doc-tags-title">Span Labels</h4>
     <ul v-if="!documentLevel" class="labels">
       <li
         v-for="(label, i) in labels"
@@ -51,11 +60,15 @@ const isDocumentTagged = (label: Label) =>
       </li>
     </ul>
 
-    <div v-else class="sidebar__doc-tags">
+    <div
+      v-if="documentLevel || hybrid"
+      class="sidebar__doc-tags"
+      :class="{ 'sidebar__doc-tags--hybrid': hybrid }"
+    >
       <h4 class="sidebar__doc-tags-title">Document Tags</h4>
       <ul class="doc-tags">
         <li
-          v-for="label in labels"
+          v-for="label in tagLabels"
           :key="label.name"
           class="doc-tag"
           :class="{ 'is-tagged': isDocumentTagged(label), 'is-readonly': readonly }"
@@ -94,6 +107,13 @@ const isDocumentTagged = (label: Label) =>
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+}
+.sidebar__doc-tags--hybrid {
+  flex: 0 1 auto;
+  max-height: 45%;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--lak-border);
 }
 .labels,
 .doc-tags {

@@ -30,6 +30,8 @@ const props = withDefaults(
   defineProps<{
     document: AnnotationDocument;
     labelset: Labelset;
+    /** Hybrid tasks: labels for whole-document tags, next to the span `labelset`. */
+    documentLabelset?: Labelset;
     annotationLevel: AnnotationLevel;
     assignment: Assignment;
     position: QueuePosition;
@@ -53,9 +55,13 @@ const props = withDefaults(
   { navigation: true, readonly: false },
 );
 
-// A task is either span-level or document-level, never both — this decides
-// which half of the workspace (span tools vs. whole-document tags) renders.
+// A task is span-level, document-level, or hybrid (span-level plus a separate
+// document labelset). This decides which parts of the workspace render: span
+// tools, whole-document tags, or both.
 const isDocumentLevel = computed(() => props.annotationLevel === "document");
+const isHybrid = computed(
+  () => !isDocumentLevel.value && (props.documentLabelset?.labels.length ?? 0) > 0,
+);
 
 const emit = defineEmits<{
   /** A save/next/previous handler rejected. The work is still here. */
@@ -178,16 +184,19 @@ const snapshot = computed<Assignment>(() => ({
   confidence: documentConfidence.value,
 }));
 
-// A task is either span-level or document-level (see isDocumentLevel above),
-// so only that half's data should count toward "has this been annotated".
-const hasAnnotations = computed(() =>
-  isDocumentLevel.value
-    ? documentAnnotations.value.length > 0 || documentRelations.value.length > 0
-    : annotations.value.length > 0,
-);
+// Only the halves this task uses count toward "has this been annotated".
+const hasAnnotations = computed(() => {
+  const tags = documentAnnotations.value.length > 0 || documentRelations.value.length > 0;
+  if (isDocumentLevel.value) return tags;
+  return annotations.value.length > 0 || (isHybrid.value && tags);
+});
 
 const labelColors = computed(() =>
   Object.fromEntries(props.labelset.labels.map((l) => [l.name, l.color])),
+);
+// Kept apart from labelColors: the two labelsets may share a name.
+const documentLabelColors = computed(() =>
+  Object.fromEntries((props.documentLabelset?.labels ?? []).map((l) => [l.name, l.color])),
 );
 
 watch(hasUnsavedChanges, (value) => emit("unsaved", value), { immediate: true });
@@ -317,6 +326,7 @@ onBeforeUnmount(() => {
       :status="assignment.status"
       :position="position"
       :annotation-level="annotationLevel"
+      :hybrid="isHybrid"
       :document-name="document.name"
       :unsaved="hasUnsavedChanges"
       :just-saved="justSaved"
@@ -344,6 +354,7 @@ onBeforeUnmount(() => {
         :document-level="isDocumentLevel"
         :active-label="activeLabel"
         :document-annotations="documentAnnotations"
+        :document-labels="isHybrid ? documentLabelset?.labels : undefined"
         :guidelines-url="guidelinesUrl"
         :readonly="readonly"
         v-model:document-confidence="documentConfidence"
@@ -365,12 +376,14 @@ onBeforeUnmount(() => {
       />
       <InspectorPane
         :document-level="isDocumentLevel"
+        :hybrid="isHybrid"
         :annotations="annotations"
         :document-annotations="documentAnnotations"
         :document-relations="documentRelations"
         :incoming-relations="incomingRelations ?? []"
         :other-documents="otherDocuments ?? []"
         :colors="labelColors"
+        :document-colors="isHybrid ? documentLabelColors : undefined"
         :selected-id="selectedId"
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"

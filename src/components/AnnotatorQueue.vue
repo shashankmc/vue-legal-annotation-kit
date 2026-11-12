@@ -13,6 +13,8 @@ const props = withDefaults(
   defineProps<{
     source: AnnotationSource;
     labelset: Labelset;
+    /** Hybrid tasks: labels for whole-document tags, next to the span `labelset`. */
+    documentLabelset?: Labelset;
     annotationLevel: AnnotationLevel;
     guidelinesUrl?: string;
     /** Labels relations can be given; defaults to the built-in set. */
@@ -139,6 +141,7 @@ const onNext = (assignment: Assignment) =>
       :document="bundle.document"
       :assignment="bundle.assignment"
       :labelset="labelset"
+      :document-labelset="documentLabelset"
       :annotation-level="annotationLevel"
       :other-documents="otherDocuments"
       :incoming-relations="incomingRelations"
