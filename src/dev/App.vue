@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // TEMP: verifying createLazySource against a simulated slow backend.
 // import { ref } from "vue";
+import { ref } from "vue";
 import AnnotatorQueue from "../components/AnnotatorQueue.vue";
+import type { DocumentRef, RelationGraphRequest } from "../model/source";
 import { createBulkSource } from "../model/bulkSource";
 // import { createLazySource } from "../model/lazySource";
 // import { flattenAssignments } from "../model/source";
@@ -70,9 +72,18 @@ const source = createBulkSource(task, 1, hybrid ? "lak:bulk:dev-hybrid" : undefi
 // }).then((s) => (source.value = s));
 
 const onComplete = () => console.log("complete!");
+
+// The kit only emits these two requests; a real host decides what they open.
+// Here the harness just shows what it was given.
+const lastRequest = ref("");
+const onViewDocument = (d: DocumentRef) => (lastRequest.value = `view-document: ${JSON.stringify(d)}`);
+const onViewGraph = (r: RelationGraphRequest) => (lastRequest.value = `view-relation-graph: ${JSON.stringify(r)}`);
 </script>
 
 <template>
+  <div v-if="lastRequest" data-test="last-request" style="padding: 0.4rem 0.8rem; font: 12px monospace; background: #fffbe6; border-bottom: 1px solid #ddd">
+    {{ lastRequest }}
+  </div>
   <AnnotatorQueue
     v-if="source"
     :source="source"
@@ -80,6 +91,10 @@ const onComplete = () => console.log("complete!");
     :document-labelset="documentLabelset"
     :annotation-level="task.annotation_level"
     :guidelines-url="task.ann_guidelines"
+    preview-documents
+    relation-graph
+    @view-document="onViewDocument"
+    @view-relation-graph="onViewGraph"
     @complete="onComplete"
   />
   <div v-else style="padding: 2rem; font-family: system-ui;">Resolving source…</div>

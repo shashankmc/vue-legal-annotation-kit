@@ -25,6 +25,8 @@ const props = defineProps<{
   linkingFrom: number | null;
   readonly?: boolean;
   relationLabels?: string[];
+  previewDocuments?: boolean;
+  relationGraph?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -35,6 +37,8 @@ const emit = defineEmits<{
   "add-document-relation": [toName: string];
   "remove-document-relation": [toName: string];
   "set-document-relation-labels": [toName: string, labels: string[]];
+  "view-document": [document: DocumentRef];
+  "view-relation-graph": [];
   link: [id: number];
   "remove-relation": [from: number, to: number];
   "set-relation-direction": [from: number, to: number, direction: RelationDirection];
@@ -198,6 +202,10 @@ const setSelectionMetadata = (value: string) => {
         :relations="documentRelations"
         :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"
+        :preview-documents="previewDocuments"
+        :relation-graph="relationGraph"
+        @view-document="emit('view-document', $event)"
+        @view-graph="emit('view-relation-graph')"
         @add="emit('add-document-relation', $event)"
         @remove="emit('remove-document-relation', $event)"
         @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"

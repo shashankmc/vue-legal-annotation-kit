@@ -8,7 +8,7 @@ import type {
   Labelset,
   QueuePosition,
 } from "../types";
-import type { DocumentRef, IncomingRelation } from "../model/source";
+import type { DocumentRef, IncomingRelation, RelationGraphRequest } from "../model/source";
 import AnnotatorHeader from "./AnnotatorHeader.vue";
 import LabelSidebar from "./LabelSidebar.vue";
 import DocumentPane from "./DocumentPane.vue";
@@ -46,6 +46,12 @@ const props = withDefaults(
     readonly?: boolean;
     /** Labels relations can be given; defaults to the built-in set. */
     relationLabels?: string[];
+    /** Offer "Read more" on documents in the document-relation picker and list.
+     * The view only emits `view-document`; showing the text is up to the host. */
+    previewDocuments?: boolean;
+    /** Offer a "View as graph" button on the document relations. The view only
+     * emits `view-relation-graph`; drawing it is up to the host. */
+    relationGraph?: boolean;
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
@@ -68,6 +74,10 @@ const emit = defineEmits<{
   "save-error": [error: unknown];
   /** Whether there is work not yet handed off — for a host's route guard. */
   unsaved: [value: boolean];
+  /** The annotator asked to read this document (a relation target). */
+  "view-document": [document: DocumentRef];
+  /** The annotator asked to see the document relations as a graph. */
+  "view-relation-graph": [request: RelationGraphRequest];
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
@@ -305,6 +315,19 @@ const onKey = (e: KeyboardEvent) => {
   }
 };
 
+// The graph request carries what is on screen — including relations not saved
+// yet — and leaves loading and drawing the rest to the host.
+const requestRelationGraph = () =>
+  emit("view-relation-graph", {
+    document: {
+      name: props.document.name,
+      order: props.assignment.order,
+      key: props.document.key,
+    },
+    relations: documentRelations.value,
+    incomingRelations: props.incomingRelations ?? [],
+  });
+
 // Remind the annotator that unsaved work will be lost when leaving the page.
 const warnIfUnsaved = (e: BeforeUnloadEvent) => {
   if (hasUnsavedChanges.value || saving.value) e.preventDefault();
@@ -389,6 +412,10 @@ onBeforeUnmount(() => {
         :linking-from="linkingFrom"
         :readonly="readonly"
         :relation-labels="relationLabels"
+        :preview-documents="previewDocuments"
+        :relation-graph="relationGraph"
+        @view-document="emit('view-document', $event)"
+        @view-relation-graph="requestRelationGraph"
         @select="onInspectorSelect"
         @set-metadata="setMetadata"
         @set-confidence="setConfidence"

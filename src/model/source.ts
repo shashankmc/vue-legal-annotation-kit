@@ -1,4 +1,4 @@
-import type { Assignment, AnnotationDocument, TaskData } from "../types";
+import type { Assignment, AnnotationDocument, DocumentRelation, TaskData } from "../types";
 
 export interface AssignmentBundle {
   document: AnnotationDocument;
@@ -25,6 +25,21 @@ export interface IncomingRelation {
   /** Name of the document that created the relation. */
   from: string;
   labels: string[];
+}
+
+/**
+ * What the host receives when the annotator asks to see the document
+ * relations as a graph. The package knows only what is on screen: the open
+ * document and the relations around it. Loading the rest of the graph (every
+ * relation among the queue's documents, say) and drawing it is the host's job.
+ */
+export interface RelationGraphRequest {
+  /** The document being annotated. */
+  document: DocumentRef;
+  /** Its outgoing relations as they stand now, unsaved edits included. */
+  relations: DocumentRelation[];
+  /** Other documents' relations pointing at it (see `listIncomingRelations`). */
+  incomingRelations: IncomingRelation[];
 }
 
 /**
