@@ -25,6 +25,8 @@ const props = defineProps<{
   linkingFrom: number | null;
   readonly?: boolean;
   relationLabels?: string[];
+  /** Labels document relations can be given; falls back to `relationLabels`. */
+  documentRelationLabels?: string[];
   previewDocuments?: boolean;
   relationGraph?: boolean;
 }>();
@@ -198,7 +200,7 @@ const setSelectionMetadata = (value: string) => {
       <DocumentRelationList
         v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
         :readonly="readonly"
-        :relation-labels="relationLabels"
+        :relation-labels="documentRelationLabels ?? relationLabels"
         :relations="documentRelations"
         :incoming-relations="incomingRelations"
         :other-documents="otherDocuments"

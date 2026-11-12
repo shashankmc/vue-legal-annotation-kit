@@ -188,6 +188,11 @@ same labelset), and span relations and `document_relations` both work. Pass the
 second labelset as the `documentLabelset` prop of `AnnotatorQueue` / `AnnotatorView`.
 Label colours are looked up per labelset, so a shared name can have two colours.
 
+Span relations and document relations can be given different relation labels:
+pass the span labelset's as `relationLabels` and the document labelset's as
+`documentRelationLabels` (see the host options below). Without
+`documentRelationLabels`, both use `relationLabels`.
+
 In the left column the **Document Tags** come right after the **Span Labels**,
 under a divider, and everything label-related scrolls as one list above the
 document confidence (which stays in view). The tags have **hotkeys too, starting
@@ -363,7 +368,8 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` | `urlParam` | `"seq"` | Query param the position is kept in; `false` when the host's router owns the URL. |
 | `AnnotatorView` | `navigation` | `true` | Progress and Back/Next. Off to show one document with just Save. |
 | `AnnotatorView` | `readonly` | `false` | Show annotations without letting anything change; no Save, no draft. |
-| `AnnotatorQueue` / `AnnotatorView` | `relationLabels` | the built-in eight | Labels a relation (span or document) can be given. Labels already on a relation stay shown even if not in the list. |
+| `AnnotatorQueue` / `AnnotatorView` | `relationLabels` | the built-in eight (`RELATION_LABELS`) | Labels a relation (span or document) can be given. Labels already on a relation stay shown even if not in the list. |
+| `AnnotatorQueue` / `AnnotatorView` | `documentRelationLabels` | `relationLabels` | Labels **document** relations can be given, when they should differ from the span relations'. A host with a separate document labelset (a hybrid task) can pass that labelset's own list here, or `RELATION_LABELS` for the built-in eight. |
 | `AnnotatorQueue` / `AnnotatorView` | `previewDocuments` | `false` | Adds a **Read more** button to documents in the document-relation picker and list. See [Document-relation actions](#document-relation-actions). |
 | `AnnotatorQueue` / `AnnotatorView` | `relationGraph` | `false` | Adds a **View as graph** button to the document relations. See [Document-relation actions](#document-relation-actions). |
 
