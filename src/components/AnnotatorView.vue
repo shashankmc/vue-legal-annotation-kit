@@ -46,6 +46,10 @@ const props = withDefaults(
     readonly?: boolean;
     /** Labels relations can be given; defaults to the built-in set. */
     relationLabels?: string[];
+    /** Labels *document* relations can be given, when they differ from the span
+     * relations' (a hybrid task's document labelset may have its own). Falls
+     * back to `relationLabels`. */
+    documentRelationLabels?: string[];
     /** Offer "Read more" on documents in the document-relation picker and list.
      * The view only emits `view-document`; showing the text is up to the host. */
     previewDocuments?: boolean;
@@ -417,6 +421,7 @@ onBeforeUnmount(() => {
         :linking-from="linkingFrom"
         :readonly="readonly"
         :relation-labels="relationLabels"
+        :document-relation-labels="documentRelationLabels"
         :preview-documents="previewDocuments"
         :relation-graph="relationGraph"
         @view-document="emit('view-document', $event)"

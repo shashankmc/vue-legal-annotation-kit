@@ -24,6 +24,8 @@ const props = withDefaults(
     guidelinesUrl?: string;
     /** Labels relations can be given; defaults to the built-in set. */
     relationLabels?: string[];
+    /** Labels document relations can be given when they differ from `relationLabels`; see AnnotatorView. */
+    documentRelationLabels?: string[];
     /** Offer "Read more" on documents when relating them; see AnnotatorView. */
     previewDocuments?: boolean;
     /** Offer "View as graph" on the document relations; see AnnotatorView. */
@@ -161,6 +163,7 @@ const onNext = (assignment: Assignment) =>
       :position="queuePosition"
       :guidelines-url="guidelinesUrl"
       :relation-labels="relationLabels"
+      :document-relation-labels="documentRelationLabels"
       :preview-documents="previewDocuments"
       :relation-graph="relationGraph"
       @view-document="emit('view-document', $event)"
