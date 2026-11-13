@@ -379,6 +379,47 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` / `AnnotatorView` | `allowOverlap` | `true` | `false` refuses a span that shares a character with another (checked after snapping to the task's level) and says so above the document. Spans may still touch end to start. |
 | `AnnotatorQueue` / `AnnotatorView` | `draft` | `true` | The crash-recovery draft in `localStorage`. `false` never reads or writes it, so no document text is left on the device; unsaved work is then lost on a reload. Read when a document opens. |
 
+### Proposed annotations
+
+`AnnotatorView` takes `proposals`: annotations a host offers — from an LLM, a
+model or a rule — for the annotator to accept, reject or correct. They are never
+part of the assignment until accepted.
+
+```ts
+type Proposal =
+  | { id: string | number; kind: "document"; label: string; rationale?: string; source?: string }
+  | { id: string | number; kind: "span"; start: number; end: number; label: string; rationale?: string; source?: string };
+```
+
+- They are listed under **Suggestions** at the top of the inspector, each with
+  its label, a *Suggested* badge, the rationale and the source. Span proposals are
+  also drawn in the text with a dashed underline in their label's colour (a dashed
+  outline when they sit on an annotation); clicking one focuses its card.
+- **Accept** adds the annotation and emits `proposal-accepted` `{ proposal, annotation }`.
+  **Reject** emits `proposal-rejected` `{ proposal }` and changes nothing.
+  **Change to…** adds it with another label and emits `proposal-corrected`
+  `{ proposal, annotation }`. Accepting is an edit like any other: the host still
+  saves the assignment.
+- `documentLabelMode` and `allowOverlap` apply. A span proposal that would overlap
+  while overlaps are off stays in the list, and the notice says why.
+- An answered proposal is hidden at once, by its `id`, even if the host passes it
+  again. Read-only views list proposals without the buttons.
+- Keys act on the focused card only, so they never clash with label hotkeys:
+  **Enter** accepts, **Delete** or **Backspace** rejects. Cards are reachable with Tab.
+
+`AnnotatorQueue` does not take proposals; a host with its own queue renders
+`AnnotatorView` per document (`navigation: false`) and passes them there.
+
+### Host slots
+
+`AnnotatorView` has three slots for a host's own controls:
+
+| Slot | Where |
+|---|---|
+| `header-actions` | In the header, before Back / Save / Next |
+| `sidebar-top` | At the top of the label column |
+| `inspector-bottom` | At the bottom of the inspector |
+
 ### Theming
 
 Every colour and radius reads a `--lak-*` CSS variable, with the default written

@@ -168,6 +168,8 @@ export interface Segment {
   end: number;
   /** ids of every annotation covering this segment (empty = plain text). */
   annotationIds: number[];
+  /** Positions (in the list passed in) of every proposal covering it. */
+  proposalIndexes: number[];
 }
 
 /**
@@ -178,9 +180,10 @@ export interface Segment {
 export function segmentText(
   fullText: string,
   annotations: Annotation[],
+  proposals: { start: number; end: number }[] = [],
 ): Segment[] {
   const bounds = new Set<number>([0, fullText.length]);
-  for (const a of annotations) {
+  for (const a of [...annotations, ...proposals]) {
     if (a.start >= 0 && a.start <= fullText.length) bounds.add(a.start);
     if (a.end >= 0 && a.end <= fullText.length) bounds.add(a.end);
   }
@@ -198,6 +201,7 @@ export function segmentText(
       annotationIds: annotations
         .filter((a) => a.start <= start && a.end >= end)
         .map((a) => a.id),
+      proposalIndexes: proposals.flatMap((p, i) => (p.start <= start && p.end >= end ? [i] : [])),
     });
   }
   return segments;

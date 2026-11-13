@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type {
+  Annotation,
   AnnotationDocument,
   AnnotationLevel,
   Assignment,
+  DocumentAnnotation,
   DocumentLabelMode,
   Label,
   Labelset,
+  Proposal,
   QueuePosition,
+  SpanProposal,
 } from "../types";
 import type { DocumentRef, IncomingRelation, RelationGraphRequest } from "../model/source";
 import AnnotatorHeader from "./AnnotatorHeader.vue";
@@ -16,6 +20,7 @@ import DocumentPane from "./DocumentPane.vue";
 import DocumentTextView from "./DocumentTextView.vue";
 import InspectorPane from "./InspectorPane.vue";
 import ConfirmModal from "./ConfirmModal.vue";
+import ProposalList from "./ProposalList.vue";
 import { useAnnotator } from "../model/useAnnotator";
 import { snapToLevel } from "../model/spans";
 import { hotkeyTarget } from "../model/labelHotkeys";
@@ -75,6 +80,9 @@ const props = withDefaults(
     /** Keep a crash-recovery copy of unsaved edits in localStorage. Off for a
      * host that must not leave document text on the device. */
     draft?: boolean;
+    /** Annotations offered for the annotator to accept, reject or correct.
+     * Shown apart from the assignment and never part of it until accepted. */
+    proposals?: Proposal[];
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
@@ -90,6 +98,7 @@ const props = withDefaults(
     documentLabelMode: "multi",
     allowOverlap: true,
     draft: true,
+    proposals: () => [],
   },
 );
 
@@ -110,6 +119,21 @@ const emit = defineEmits<{
   "view-document": [document: DocumentRef];
   /** The annotator asked to see the document relations as a graph. */
   "view-relation-graph": [request: RelationGraphRequest];
+  /** A proposal was accepted; `annotation` is now in the assignment. */
+  "proposal-accepted": [event: { proposal: Proposal; annotation: Annotation | DocumentAnnotation }];
+  /** A proposal was rejected; the assignment is unchanged. */
+  "proposal-rejected": [event: { proposal: Proposal }];
+  /** A proposal was accepted with another label; `annotation` carries it. */
+  "proposal-corrected": [event: { proposal: Proposal; annotation: Annotation | DocumentAnnotation }];
+}>();
+
+defineSlots<{
+  /** Host controls in the header, before Back/Save/Next. */
+  "header-actions"?: () => unknown;
+  /** Host content at the top of the label column. */
+  "sidebar-top"?: () => unknown;
+  /** Host content at the bottom of the inspector. */
+  "inspector-bottom"?: () => unknown;
 }>();
 
 // A per-document local buffer: protects in-progress edits against a crash or
@@ -137,6 +161,8 @@ const {
   linkingFrom,
   refusal,
   createSpan,
+  addSpan,
+  addDocumentLabel,
   remove,
   select,
   markSaved,
@@ -178,6 +204,50 @@ const onCreate = (payload: { start: number; end: number; text: string }) => {
   if (props.readonly) return;
   const range = snapToLevel(props.document.full_text, props.annotationLevel, payload.start, payload.end);
   createSpan(range.start, range.end, props.document.full_text.slice(range.start, range.end));
+};
+
+// --- Proposals ---------------------------------------------------------------
+// Answered proposals are hidden here at once, whatever the host does with the
+// event; one the annotator could not accept (an overlap) stays, with a notice.
+const answered = ref(new Set<Proposal["id"]>());
+const openProposals = computed(() =>
+  props.readonly ? props.proposals : props.proposals.filter((p) => !answered.value.has(p.id)),
+);
+const spanProposals = computed(() =>
+  isDocumentLevel.value ? [] : openProposals.value.filter((p): p is SpanProposal => p.kind === "span"),
+);
+const focusedProposalId = ref<Proposal["id"] | null>(null);
+
+const applyProposal = (proposal: Proposal, label: string) =>
+  proposal.kind === "span"
+    ? addSpan(proposal.start, proposal.end, props.document.full_text.slice(proposal.start, proposal.end), label)
+    : addDocumentLabel(label);
+
+const answer = (proposal: Proposal) => {
+  answered.value = new Set(answered.value).add(proposal.id);
+  if (focusedProposalId.value === proposal.id) focusedProposalId.value = null;
+};
+
+const acceptProposal = (proposal: Proposal) => {
+  if (props.readonly) return;
+  const annotation = applyProposal(proposal, proposal.label);
+  if (!annotation) return;
+  answer(proposal);
+  emit("proposal-accepted", { proposal, annotation });
+};
+
+const correctProposal = (proposal: Proposal, label: string) => {
+  if (props.readonly) return;
+  const annotation = applyProposal(proposal, label);
+  if (!annotation) return;
+  answer(proposal);
+  emit("proposal-corrected", { proposal, annotation });
+};
+
+const rejectProposal = (proposal: Proposal) => {
+  if (props.readonly) return;
+  answer(proposal);
+  emit("proposal-rejected", { proposal });
 };
 
 // Picking the active label again puts it down.
@@ -408,7 +478,9 @@ onBeforeUnmount(() => {
       @previous="onPrevious"
       @save="onSaveClick"
       @next="onNext"
-    />
+    >
+      <template v-if="$slots['header-actions']" #actions><slot name="header-actions" /></template>
+    </AnnotatorHeader>
 
     <p v-if="saveError" class="lak-annotator__error" role="alert">
       <span v-if="keepsDraft">
@@ -444,7 +516,9 @@ onBeforeUnmount(() => {
         v-model:document-confidence="documentConfidence"
         @select="toggleActiveLabel"
         @toggle-document-label="toggleDocumentLabel"
-      />
+      >
+        <template #top><slot name="sidebar-top" /></template>
+      </LabelSidebar>
       <DocumentTextView v-if="isDocumentLevel" :text="document.full_text" />
       <DocumentPane
         v-else
@@ -455,9 +529,11 @@ onBeforeUnmount(() => {
         :selected-id="selectedId"
         :linking="linkingFrom !== null"
         :show-relations="showRelations"
+        :proposals="spanProposals"
         :readonly="readonly"
         @create="onCreate"
         @select="onActivate"
+        @select-proposal="focusedProposalId = $event"
       />
       <InspectorPane
         :document-level="isDocumentLevel"
@@ -497,7 +573,24 @@ onBeforeUnmount(() => {
         @remove-relation="removeRelation"
         @set-relation-direction="setRelationDirection"
         @set-relation-labels="setRelationLabels"
-      />
+      >
+        <template #top>
+          <ProposalList
+            :proposals="openProposals"
+            :span-labels="labelset.labels"
+            :document-labels="isDocumentLevel ? labelset.labels : (documentLabelset?.labels ?? [])"
+            :span-colors="labelColors"
+            :document-colors="isHybrid ? documentLabelColors : labelColors"
+            :text="document.full_text"
+            :focused-id="focusedProposalId"
+            :readonly="readonly"
+            @accept="acceptProposal"
+            @reject="rejectProposal"
+            @correct="correctProposal"
+          />
+        </template>
+        <template #bottom><slot name="inspector-bottom" /></template>
+      </InspectorPane>
     </div>
 
     <ConfirmModal

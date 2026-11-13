@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { Annotation } from "../types";
+import type { Annotation, SpanProposal } from "../types";
 import { selectionOffsets } from "../model/selection";
 import { segmentText } from "../model/spans";
 import { arc } from "../model/arrows";
@@ -19,11 +19,14 @@ const props = defineProps<{
   readonly?: boolean;
   /** Draw relation arrows; off draws none. Defaults to on. */
   showRelations?: boolean;
+  /** Proposed spans, drawn dashed and apart from the annotations. */
+  proposals?: SpanProposal[];
 }>();
 
 const emit = defineEmits<{
   create: [payload: { start: number; end: number; text: string }];
   select: [id: number];
+  "select-proposal": [id: SpanProposal["id"]];
 }>();
 
 const root = ref<HTMLElement>();
@@ -34,7 +37,17 @@ const byId = computed(
   () => new Map(props.annotations.map((a) => [a.id, a] as const)),
 );
 
-const segments = computed(() => segmentText(props.text, props.annotations));
+const proposalList = computed(() => props.proposals ?? []);
+const segments = computed(() => segmentText(props.text, props.annotations, proposalList.value));
+// The smallest proposal over a segment is the one a click means.
+const primaryProposal = (indexes: number[]): SpanProposal | undefined => {
+  let best: SpanProposal | undefined;
+  for (const i of indexes) {
+    const p = proposalList.value[i];
+    if (p && (!best || p.end - p.start < best.end - best.start)) best = p;
+  }
+  return best;
+};
 
 // The most specific (smallest) annotation covering a segment drives its
 // click target; that's the one a user most likely means to act on next.
@@ -200,10 +213,19 @@ onBeforeUnmount(() => {
               'is-selected': seg.annotationIds.includes(selectedId ?? NaN),
               'is-overlap': seg.annotationIds.length > 1,
               'is-revealed': seg.annotationIds.includes(revealedId ?? NaN),
+              'has-proposal': seg.proposalIndexes.length > 0,
             }"
             :style="{ '--mark-color': colors[foreground(seg.annotationIds)!.label] }"
             :title="seg.annotationIds.map((id) => byId.get(id)?.label).join(', ')"
             @click.stop="emit('select', primary(seg.annotationIds)!.id)"
+            >{{ seg.text }}</mark
+          >
+          <mark
+            v-else-if="seg.proposalIndexes.length && primaryProposal(seg.proposalIndexes)"
+            class="mark mark--proposal"
+            :style="{ '--mark-color': colors[primaryProposal(seg.proposalIndexes)!.label] }"
+            :title="`Suggested: ${seg.proposalIndexes.map((i) => proposalList[i].label).join(', ')}`"
+            @click.stop="emit('select-proposal', primaryProposal(seg.proposalIndexes)!.id)"
             >{{ seg.text }}</mark
           >
           <template v-else>{{ seg.text }}</template>
@@ -262,6 +284,16 @@ onBeforeUnmount(() => {
   border-radius: var(--lak-radius-sm, 2px);
   padding: 0.05em 0;
   cursor: pointer;
+}
+/* A proposal is not an annotation: no fill, a dashed underline in its label's
+   colour. Under an annotation it adds a dashed outline. */
+.mark--proposal {
+  background: none;
+  border-bottom: 2px dashed var(--mark-color, var(--lak-muted, #6b7280));
+}
+.mark.has-proposal {
+  outline: 1px dashed var(--lak-muted, #6b7280);
+  outline-offset: 1px;
 }
 .mark.is-overlap {
   border-bottom-style: double;

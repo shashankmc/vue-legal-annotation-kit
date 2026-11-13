@@ -35,6 +35,31 @@ export const RELATION_LABELS: RelationLabel[] = [
  * exactly one at a time (`single`), where choosing a tag replaces the last. */
 export type DocumentLabelMode = "multi" | "single";
 
+/** An annotation a host offers — from an LLM, a model or a rule — for the
+ * annotator to accept, reject or correct. Never part of the assignment until
+ * accepted; the host decides what to do with each answer. */
+interface ProposalBase {
+  /** The host's id, echoed back in every proposal event. */
+  id: number | string;
+  /** Must name a label in the matching labelset. */
+  label: string;
+  /** Why it was proposed, shown to the annotator. */
+  rationale?: string | null;
+  /** Where it came from (e.g. a model and prompt version), shown small. */
+  source?: string | null;
+}
+/** A whole-document tag. */
+export interface DocumentProposal extends ProposalBase {
+  kind: "document";
+}
+/** A span over `full_text`, offsets as in `Annotation`. */
+export interface SpanProposal extends ProposalBase {
+  kind: "span";
+  start: number;
+  end: number;
+}
+export type Proposal = DocumentProposal | SpanProposal;
+
 export type AssignmentStatus = "pending" | "done" | (string & {});
 
 export interface Label {

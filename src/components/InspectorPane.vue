@@ -107,6 +107,7 @@ const setSelectionMetadata = (value: string) => {
 
 <template>
   <aside class="inspector">
+    <slot name="top" />
     <section v-if="selection" class="selection" :style="{ '--region-color': selectionColor }">
       <div class="selection__head">
         <span class="region__swatch" :style="{ background: selectionColor }" />
@@ -229,6 +230,7 @@ const setSelectionMetadata = (value: string) => {
         @set-labels="(to, labels) => emit('set-document-relation-labels', to, labels)"
       />
     </template>
+    <slot name="bottom" />
   </aside>
 </template>
 
@@ -243,6 +245,11 @@ const setSelectionMetadata = (value: string) => {
 .inspector__title {
   margin: 0 0 0.6rem;
   font-size: 0.9rem;
+}
+/* A heading straight after a list (relations hidden) still gets its gap. */
+.regions + .inspector__title,
+.linking-hint + .inspector__title {
+  margin-top: 1rem;
 }
 .regions {
   list-style: none;

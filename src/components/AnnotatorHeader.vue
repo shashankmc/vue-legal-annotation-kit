@@ -62,6 +62,7 @@ const percent = () =>
       </div>
     </div>
 
+    <div v-if="$slots.actions" class="header__actions"><slot name="actions" /></div>
     <div v-if="navigation || !readonly" class="header__nav">
       <button
         v-if="navigation"
@@ -126,6 +127,12 @@ const percent = () =>
   padding: 0.5rem 0.75rem;
 }
 .header__left,
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
 .header__nav {
   display: flex;
   align-items: center;

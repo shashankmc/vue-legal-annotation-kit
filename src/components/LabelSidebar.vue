@@ -43,6 +43,7 @@ const isDocumentTagged = (label: Label) =>
 
 <template>
   <aside class="sidebar">
+    <slot name="top" />
     <template v-if="guidelinesUrl">
       <a class="guidelines-link" :href="guidelinesUrl" target="_blank" rel="noopener">
         See Annotation Guidelines

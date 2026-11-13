@@ -52,6 +52,18 @@ export function useAnnotator(
     const label = activeLabel.value;
     if (!label) return null;
     if (isDuplicate(annotations.value, label.name, start, end)) return null;
+    return addSpan(start, end, text, label.name);
+  }
+
+  /** Add a span with a given label, under the same rules as createSpan. An
+   * identical span already there is returned as it is (for accepting a
+   * proposal the annotator had already made by hand). */
+  function addSpan(start: number, end: number, text: string, labelName: string): Annotation | null {
+    const same = annotations.value.find((a) => a.label === labelName && a.start === start && a.end === end);
+    if (same) {
+      select(same.id);
+      return same;
+    }
     if (rules().allowOverlap === false && overlapsAny(annotations.value, start, end)) {
       refusal.value = "overlap";
       return null;
@@ -62,7 +74,7 @@ export function useAnnotator(
       id: nextTempId(annotations.value),
       start,
       end,
-      label: label.name,
+      label: labelName,
       text,
       relations: [],
       confidence: 0,
@@ -97,6 +109,18 @@ export function useAnnotator(
       selectedId.value = null;
     }
     dirty.value = true;
+  }
+
+  /** Apply a document tag by name, under the label mode; an existing tag of
+   * that name is returned as it is. Returns the tag. */
+  function addDocumentLabel(labelName: string): DocumentAnnotation {
+    const existing = documentAnnotations.value.find((d) => d.label === labelName);
+    if (existing) {
+      selectDocumentAnnotation(existing.id);
+      return existing;
+    }
+    toggleDocumentLabel({ name: labelName, color: "" });
+    return documentAnnotations.value.find((d) => d.label === labelName)!;
   }
 
   function removeDocumentAnnotation(id: number) {
@@ -247,6 +271,8 @@ export function useAnnotator(
     linkingFrom,
     refusal,
     createSpan,
+    addSpan,
+    addDocumentLabel,
     remove,
     select,
     markSaved,

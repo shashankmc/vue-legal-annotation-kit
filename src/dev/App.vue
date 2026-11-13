@@ -3,6 +3,9 @@
 // import { ref } from "vue";
 import { ref } from "vue";
 import AnnotatorQueue from "../components/AnnotatorQueue.vue";
+import AnnotatorView from "../components/AnnotatorView.vue";
+import { flattenAssignments } from "../model/source";
+import type { Proposal } from "../types";
 import type { DocumentRef, RelationGraphRequest } from "../model/source";
 import { createBulkSource } from "../model/bulkSource";
 // import { createLazySource } from "../model/lazySource";
@@ -73,6 +76,36 @@ const source = createBulkSource(task, 1, hybrid ? `lak:bulk:dev-hybrid${params.h
 
 const onComplete = () => console.log("complete!");
 
+// `?proposals` shows the first document alone in AnnotatorView, as a host with
+// its own queue would, with proposals to accept, reject or correct and the
+// host slots filled in. Answers are logged in the bar at the top.
+const proposalMode = params.has("proposals");
+const firstBundle = flattenAssignments(task, 1)[0];
+const firstText = firstBundle.document.full_text;
+const proposalAt = (word: string) => Math.max(0, firstText.indexOf(word));
+const sampleProposals: Proposal[] = [
+  // Two words the sample file leaves unannotated, so the dashed proposal
+  // underline shows on its own.
+  ...["Schengen", "implementation"].map((word, i) => {
+    const start = proposalAt(word);
+    const label = task.labelset.labels[i].name;
+    return {
+      id: `span-${i}`,
+      kind: "span" as const,
+      start,
+      end: start + word.length,
+      label,
+      rationale: `The model read "${word}" as ${label}.`,
+      source: "demo-model · prompt v1",
+    };
+  }),
+  ...(documentLabelset
+    ? [{ id: "doc-0", kind: "document" as const, label: tagLabels[0].name, rationale: "The text is on point.", source: "demo-model · prompt v1" }]
+    : []),
+];
+const answered = (kind: string) => (e: { proposal: Proposal; annotation?: unknown }) =>
+  (lastRequest.value = `${kind}: ${JSON.stringify(e)}`);
+
 // Host options, switchable live. `draft` is read when a document opens, so it
 // applies from the next document on.
 const options = ref({
@@ -109,8 +142,28 @@ const onViewGraph = (r: RelationGraphRequest) => (lastRequest.value = `view-rela
       </select>
     </label>
   </div>
+  <div v-if="proposalMode" style="height: calc(100vh - 4rem)">
+    <AnnotatorView
+      :document="firstBundle.document"
+      :assignment="firstBundle.assignment"
+      :labelset="task.labelset"
+      :document-labelset="documentLabelset"
+      :annotation-level="task.annotation_level"
+      :position="{ current: 1, total: 1 }"
+      :navigation="false"
+      :proposals="sampleProposals"
+      v-bind="options"
+      @proposal-accepted="answered('proposal-accepted')($event)"
+      @proposal-rejected="answered('proposal-rejected')($event)"
+      @proposal-corrected="answered('proposal-corrected')($event)"
+    >
+      <template #header-actions><button type="button">Skip (host)</button></template>
+      <template #sidebar-top><div style="font: 12px system-ui; padding: 0.3rem 0">sidebar-top slot</div></template>
+      <template #inspector-bottom><div style="font: 12px system-ui; padding-top: 0.6rem">inspector-bottom slot</div></template>
+    </AnnotatorView>
+  </div>
   <AnnotatorQueue
-    v-if="source"
+    v-else-if="source"
     v-bind="options"
     :source="source"
     :labelset="task.labelset"
