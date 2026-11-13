@@ -31,6 +31,10 @@ const props = defineProps<{
   relationGraph?: boolean;
   /** Whether the confidence rating on the selection card shows at all. */
   showConfidence?: boolean;
+  /** Whether relations show and can be drawn; off hides them all. Default on. */
+  showRelations?: boolean;
+  /** Whether the metadata field shows on the selection card. Default on. */
+  showMetadata?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -81,6 +85,14 @@ const selectedTag = computed(() =>
     : (props.documentAnnotations.find((d) => d.id === props.selectedDocumentAnnotationId) ?? null),
 );
 const selection = computed(() => selectedSpan.value ?? selectedTag.value);
+const relationsShown = computed(() => props.showRelations !== false);
+const metadataShown = computed(() => props.showMetadata !== false);
+// What a selected item offers, for the hint shown while nothing is selected.
+const selectionOffers = computed(() =>
+  [props.showConfidence ? "rate it" : null, metadataShown.value ? "add metadata" : null]
+    .filter(Boolean)
+    .join(" or "),
+);
 
 const setSelectionConfidence = (value: number) => {
   if (selectedSpan.value) emit("set-confidence", selectedSpan.value.id, value);
@@ -108,7 +120,7 @@ const setSelectionMetadata = (value: string) => {
         :disabled="readonly"
         @update:model-value="setSelectionConfidence"
       />
-      <label class="metadata">
+      <label v-if="metadataShown" class="metadata">
         <span class="metadata__title">Metadata</span>
         <textarea
           class="metadata__input"
@@ -120,8 +132,8 @@ const setSelectionMetadata = (value: string) => {
         />
       </label>
     </section>
-    <p v-else-if="!readonly && hasAnything" class="selection__hint">
-      Select {{ selectionNoun }} to {{ showConfidence ? "rate it or add" : "add" }} metadata.
+    <p v-else-if="!readonly && hasAnything && selectionOffers" class="selection__hint">
+      Select {{ selectionNoun }} to {{ selectionOffers }}.
     </p>
 
     <template v-if="!documentLevel">
@@ -141,7 +153,7 @@ const setSelectionMetadata = (value: string) => {
           <span class="region__label">{{ a.label }}</span>
           <span class="region__text">{{ a.text }}</span>
           <button
-            v-if="a.id === selectedId && !readonly"
+            v-if="a.id === selectedId && !readonly && relationsShown"
             class="region__act"
             title="Draw a relation from this region"
             @click.stop="emit('link', a.id)"
@@ -165,6 +177,7 @@ const setSelectionMetadata = (value: string) => {
       </p>
 
       <RelationList
+        v-if="relationsShown"
         :annotations="annotations"
         :colors="colors"
         :readonly="readonly"
@@ -201,7 +214,7 @@ const setSelectionMetadata = (value: string) => {
       </ul>
 
       <DocumentRelationList
-        v-if="(!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length"
+        v-if="relationsShown && ((!readonly && otherDocuments.length) || documentRelations.length || incomingRelations.length)"
         :readonly="readonly"
         :relation-labels="documentRelationLabels ?? relationLabels"
         :relations="documentRelations"

@@ -17,6 +17,8 @@ const props = defineProps<{
   linking?: boolean;
   /** Selecting text creates nothing; marks can still be clicked to inspect. */
   readonly?: boolean;
+  /** Draw relation arrows; off draws none. Defaults to on. */
+  showRelations?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -148,7 +150,7 @@ const redraw = () => {
   if (!canvas.value) return;
   const canvasRect = canvas.value.getBoundingClientRect();
   const list: Arrow[] = [];
-  for (const a of props.annotations) {
+  for (const a of props.showRelations === false ? [] : props.annotations) {
     for (const rel of a.relations) {
       const from = anchorOf(a.id, canvasRect);
       const to = anchorOf(rel.to, canvasRect);
@@ -171,7 +173,7 @@ const redraw = () => {
 
 // Recompute after the DOM settles (flush: post) whenever the data changes, and
 // whenever the text reflows (resize / font load).
-watch(() => props.annotations, redraw, { deep: true, flush: "post" });
+watch([() => props.annotations, () => props.showRelations], redraw, { deep: true, flush: "post" });
 
 let observer: ResizeObserver | undefined;
 onMounted(() => {

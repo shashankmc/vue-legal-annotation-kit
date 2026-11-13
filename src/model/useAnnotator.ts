@@ -4,9 +4,21 @@ import type {
   DocumentAnnotation,
   DocumentRelation,
   Label,
+  DocumentLabelMode,
   RelationDirection,
 } from "../types";
-import { isDuplicate, nextTempId } from "./spans";
+import { isDuplicate, nextTempId, overlapsAny } from "./spans";
+
+/** Host rules the annotator enforces. Read on every edit, so they can change. */
+export interface AnnotatorRules {
+  /** `single`: adding a document tag replaces the one already there. */
+  documentLabelMode?: DocumentLabelMode;
+  /** `false`: a span that overlaps another is refused. */
+  allowOverlap?: boolean;
+}
+
+/** Why the last attempted span was not created, for the view to explain. */
+export type SpanRefusal = "overlap" | null;
 
 /**
  * Annotation state for one document. Holds the working copy of the annotations,
@@ -17,6 +29,7 @@ export function useAnnotator(
   initial: Annotation[],
   initialDocumentAnnotations: DocumentAnnotation[] = [],
   initialDocumentRelations: DocumentRelation[] = [],
+  rules: () => AnnotatorRules = () => ({}),
 ) {
   const annotations = ref<Annotation[]>([...initial]);
   const documentAnnotations = ref<DocumentAnnotation[]>([...initialDocumentAnnotations]);
@@ -27,15 +40,23 @@ export function useAnnotator(
   const dirty = ref(false);
   /** Source annotation while the user is drawing a relation, else null. */
   const linkingFrom = ref<number | null>(null);
+  /** Set when a span is refused under the host's rules; cleared by the next span made. */
+  const refusal = ref<SpanRefusal>(null);
 
   const find = (id: number) => annotations.value.find((a) => a.id === id);
 
   /** Create a span with the active label. Returns the new annotation, or null
-   * if there is no active label or the exact range is already labelled. */
+   * if there is no active label, the exact range is already labelled, or the
+   * range overlaps another span while overlaps are off (then `refusal` says so). */
   function createSpan(start: number, end: number, text: string): Annotation | null {
     const label = activeLabel.value;
     if (!label) return null;
     if (isDuplicate(annotations.value, label.name, start, end)) return null;
+    if (rules().allowOverlap === false && overlapsAny(annotations.value, start, end)) {
+      refusal.value = "overlap";
+      return null;
+    }
+    refusal.value = null;
 
     const annotation: Annotation = {
       id: nextTempId(annotations.value),
@@ -56,13 +77,15 @@ export function useAnnotator(
 
   /** Toggle a whole-document label: adds it if absent, removes it if already
    * applied. Document-level tags carry no offsets, so there is no "same range"
-   * duplicate rule — just one entry per label. */
+   * duplicate rule — just one entry per label. In `single` mode adding a tag
+   * replaces whatever was there, so at most one is ever applied. */
   function toggleDocumentLabel(label: Label) {
     const existing = documentAnnotations.value.find((d) => d.label === label.name);
     if (existing) {
       documentAnnotations.value = documentAnnotations.value.filter((d) => d.id !== existing.id);
       if (selectedDocumentAnnotationId.value === existing.id) selectedDocumentAnnotationId.value = null;
     } else {
+      if (rules().documentLabelMode === "single") documentAnnotations.value = [];
       const tag: DocumentAnnotation = {
         id: nextTempId(documentAnnotations.value),
         label: label.name,
@@ -222,6 +245,7 @@ export function useAnnotator(
     selectedDocumentAnnotationId,
     dirty,
     linkingFrom,
+    refusal,
     createSpan,
     remove,
     select,

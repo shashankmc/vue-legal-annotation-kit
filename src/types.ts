@@ -31,6 +31,10 @@ export const RELATION_LABELS: RelationLabel[] = [
   "Part of",
 ];
 
+/** How many document tags an assignment may carry: any number (`multi`), or
+ * exactly one at a time (`single`), where choosing a tag replaces the last. */
+export type DocumentLabelMode = "multi" | "single";
+
 export type AssignmentStatus = "pending" | "done" | (string & {});
 
 export interface Label {

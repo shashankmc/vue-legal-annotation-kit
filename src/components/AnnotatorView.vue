@@ -4,6 +4,7 @@ import type {
   AnnotationDocument,
   AnnotationLevel,
   Assignment,
+  DocumentLabelMode,
   Label,
   Labelset,
   QueuePosition,
@@ -60,13 +61,36 @@ const props = withDefaults(
      * card, and on the assignment as Document Confidence. When hidden the
      * stored confidence values are left exactly as the task carried them. */
     showConfidence?: boolean;
+    /** Whether relations can be seen and drawn: span relations, their arrows,
+     * and document relations. When hidden, stored relations are left as the
+     * task carried them. */
+    showRelations?: boolean;
+    /** Whether the free-text metadata field shows on the selection card. When
+     * hidden, stored metadata is left as the task carried it. */
+    showMetadata?: boolean;
+    /** `single`: one document tag at a time; choosing another replaces it. */
+    documentLabelMode?: DocumentLabelMode;
+    /** `false`: a span that overlaps another is refused, with a notice. */
+    allowOverlap?: boolean;
+    /** Keep a crash-recovery copy of unsaved edits in localStorage. Off for a
+     * host that must not leave document text on the device. */
+    draft?: boolean;
     // Declared as props rather than emits so the view can await what the host
     // returns — `@save="…"` in a parent template still binds to these.
     onSave?: AssignmentHandler;
     onNext?: AssignmentHandler;
     onPrevious?: AssignmentHandler;
   }>(),
-  { navigation: true, readonly: false, showConfidence: true },
+  {
+    navigation: true,
+    readonly: false,
+    showConfidence: true,
+    showRelations: true,
+    showMetadata: true,
+    documentLabelMode: "multi",
+    allowOverlap: true,
+    draft: true,
+  },
 );
 
 // A task is span-level, document-level, or hybrid (span-level plus a separate
@@ -95,8 +119,10 @@ const draftKey =
   props.assignment.id !== undefined
     ? `lak:draft:assignment:${props.assignment.id}`
     : `lak:draft:${props.document.name}:${props.assignment.annotator}:${props.assignment.order}`;
-// Read-only views edit nothing, so they neither resume nor write a draft.
-const existingDraft = props.readonly ? null : loadDraft(draftKey);
+// Read-only views edit nothing, so they neither resume nor write a draft; nor
+// does a view whose host turned drafts off.
+const keepsDraft = !props.readonly && props.draft;
+const existingDraft = keepsDraft ? loadDraft(draftKey) : null;
 // A resumed draft is itself unsaved work, even before useAnnotator's own
 // dirty tracking sees any new edit.
 const resumedUnsaved = ref(existingDraft !== null);
@@ -109,6 +135,7 @@ const {
   selectedDocumentAnnotationId,
   dirty,
   linkingFrom,
+  refusal,
   createSpan,
   remove,
   select,
@@ -133,6 +160,15 @@ const {
   existingDraft?.annotations ?? props.assignment.annotations,
   existingDraft?.documentAnnotations ?? props.assignment.document_annotations,
   existingDraft?.documentRelations ?? props.assignment.document_relations,
+  () => ({ documentLabelMode: props.documentLabelMode, allowOverlap: props.allowOverlap }),
+);
+
+// Why the last selection made no span, in words; dismissable, and gone by
+// itself once the next span is made.
+const refusalMessage = computed(() =>
+  refusal.value === "overlap"
+    ? "That selection overlaps an annotation. Spans may not overlap in this task."
+    : null,
 );
 
 // Snap the raw browser selection to the task's declared granularity — e.g. a
@@ -173,7 +209,7 @@ const savedConfidence = ref(props.assignment.confidence);
 watch(
   [annotations, documentAnnotations, documentRelations, documentConfidence],
   () =>
-    !props.readonly &&
+    keepsDraft &&
     saveDraft(draftKey, {
       annotations: annotations.value,
       documentAnnotations: documentAnnotations.value,
@@ -222,7 +258,7 @@ watch(hasUnsavedChanges, (value) => emit("unsaved", value), { immediate: true })
 // Once the host has stored the snapshot, the local crash-recovery buffer is no
 // longer needed. Not before: a save that fails must leave the work recoverable.
 const clearLocalState = () => {
-  clearDraft(draftKey);
+  if (keepsDraft) clearDraft(draftKey);
   markSaved();
   resumedUnsaved.value = false;
   savedConfidence.value = documentConfidence.value;
@@ -384,6 +420,13 @@ onBeforeUnmount(() => {
       </button>
     </p>
 
+    <p v-if="refusalMessage" class="lak-annotator__notice" role="status">
+      <span>{{ refusalMessage }}</span>
+      <button type="button" class="lak-annotator__error-close" aria-label="Dismiss" @click="refusal = null">
+        ×
+      </button>
+    </p>
+
     <div class="lak-annotator__body">
       <LabelSidebar
         :labels="labelset.labels"
@@ -407,6 +450,7 @@ onBeforeUnmount(() => {
         :colors="labelColors"
         :selected-id="selectedId"
         :linking="linkingFrom !== null"
+        :show-relations="showRelations"
         :readonly="readonly"
         @create="onCreate"
         @select="onActivate"
@@ -425,6 +469,8 @@ onBeforeUnmount(() => {
         :selected-document-annotation-id="selectedDocumentAnnotationId"
         :linking-from="linkingFrom"
         :show-confidence="showConfidence"
+        :show-relations="showRelations"
+        :show-metadata="showMetadata"
         :readonly="readonly"
         :relation-labels="relationLabels"
         :document-relation-labels="documentRelationLabels"
@@ -485,6 +531,18 @@ onBeforeUnmount(() => {
   border-radius: var(--lak-radius, 6px);
   background: var(--lak-danger-bg, #fef2f2);
   color: var(--lak-danger-fg, #991b1b);
+  font-size: 0.85rem;
+}
+.lak-annotator__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 0.75rem 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--lak-warning, #d97706);
+  border-radius: var(--lak-radius, 6px);
+  background: var(--lak-warning-bg, #fffbeb);
+  color: var(--lak-warning-fg, #92400e);
   font-size: 0.85rem;
 }
 .lak-annotator__error-close {

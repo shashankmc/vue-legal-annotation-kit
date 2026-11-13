@@ -18,6 +18,15 @@ export function isDuplicate(
   );
 }
 
+/**
+ * True if `start`–`end` shares at least one character with any annotation.
+ * Touching ends (one span ending where the next starts) do not overlap. Used
+ * when a host turns overlapping spans off (`allowOverlap: false`).
+ */
+export function overlapsAny(annotations: Annotation[], start: number, end: number): boolean {
+  return annotations.some((a) => a.start < end && a.end > start);
+}
+
 /** Next temporary id for a client-created item (negative to avoid clashing
  * with real database ids until the row is persisted). Shared by annotations
  * and document-level annotations, each keeping their own id sequence. */

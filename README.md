@@ -373,6 +373,54 @@ which keeps two tasks that reuse a document name from sharing a draft.
 | `AnnotatorQueue` / `AnnotatorView` | `previewDocuments` | `false` | Adds a **Read more** button to documents in the document-relation picker and list. See [Document-relation actions](#document-relation-actions). |
 | `AnnotatorQueue` / `AnnotatorView` | `relationGraph` | `false` | Adds a **View as graph** button to the document relations. See [Document-relation actions](#document-relation-actions). |
 | `AnnotatorQueue` / `AnnotatorView` | `showConfidence` | `true` | Confidence (star) ratings on, off. `false` hides every rating — per-span, per-tag and the assignment-level *Document Confidence* — and leaves the stored `confidence` values exactly as they were. For a host that does not need confidence values. |
+| `AnnotatorQueue` / `AnnotatorView` | `showRelations` | `true` | Relations on, off. `false` hides the link button, the relation list, the arrows over the text and the document relations, and leaves stored relations exactly as they were. |
+| `AnnotatorQueue` / `AnnotatorView` | `showMetadata` | `true` | The metadata field on the selected annotation or tag. `false` hides it and leaves stored `metadata` exactly as it was. |
+| `AnnotatorQueue` / `AnnotatorView` | `documentLabelMode` | `"multi"` | `"single"` keeps at most one document tag: choosing another replaces it, choosing it again removes it. Hotkeys follow the same rule. For a host labelling each document with one class. |
+| `AnnotatorQueue` / `AnnotatorView` | `allowOverlap` | `true` | `false` refuses a span that shares a character with another (checked after snapping to the task's level) and says so above the document. Spans may still touch end to start. |
+| `AnnotatorQueue` / `AnnotatorView` | `draft` | `true` | The crash-recovery draft in `localStorage`. `false` never reads or writes it, so no document text is left on the device; unsaved work is then lost on a reload. Read when a document opens. |
+
+### Theming
+
+Every colour and radius reads a `--lak-*` CSS variable, with the default written
+next to it. Set any of them on `.lak-annotator` or on any element above it:
+
+```css
+.my-host {
+  --lak-accent: #7c3aed;
+  --lak-radius: 10px;
+}
+```
+
+| Variable | Default | Used for |
+|---|---|---|
+| `--lak-accent` | `#1e4e79` | Buttons, the active label, links |
+| `--lak-on-accent` | `#fff` | Text on the accent and on label colours |
+| `--lak-on-accent-soft` | `rgba(255,255,255,.25)` | Hotkey badge on an active label |
+| `--lak-bg` | `#fff` | The annotator's background |
+| `--lak-fg` | `#111` | Text |
+| `--lak-fg-soft` | `#374151` | Secondary text |
+| `--lak-muted` | `#6b7280` | Hints, counts, empty states |
+| `--lak-surface` | `#fff` | Cards, chips, menus |
+| `--lak-sidebar-bg` | `#f1f1f1` | The label column |
+| `--lak-border` | `rgba(0,0,0,.12)` | Borders and dividers |
+| `--lak-border-strong` | `#d1d5db` | Secondary button borders |
+| `--lak-hover` | `rgba(0,0,0,.03)`–`.08` | Hover and pressed backgrounds |
+| `--lak-success` | `#16a34a` | Done status, "Saved" |
+| `--lak-warning` | `#d97706` | Unsaved changes, refusal notices |
+| `--lak-warning-bg` / `--lak-warning-fg` | `#fffbeb` / `#92400e` | Refusal notices |
+| `--lak-danger` | `#dc2626` | Delete, load errors |
+| `--lak-danger-bg` / `--lak-danger-border` / `--lak-danger-fg` | `#fef2f2` / `#fecaca` / `#991b1b` | Save errors |
+| `--lak-progress-track` | `#e2e8f0` | Progress bar track, spinner |
+| `--lak-star-on` / `--lak-star-empty` | `#f5b301` / `#d2cece` | Confidence stars |
+| `--lak-overlay` | `rgba(0,0,0,.45)` | Behind the confirm dialog |
+| `--lak-scrim` | `rgba(255,255,255,.7)` | Over a document while it loads |
+| `--lak-shadow` | `rgba(0,0,0,.15)`–`.25` | Menu and dialog shadows |
+| `--lak-radius` | `6px` | Cards, buttons, inputs |
+| `--lak-radius-sm` | `2px`–`4px` | Swatches, badges |
+| `--lak-radius-lg` | `10px` | The confirm dialog |
+
+Pills (`999px`) and the spinner (`50%`) keep their shape. Label colours come from
+the labelset, not from variables.
 
 ---
 

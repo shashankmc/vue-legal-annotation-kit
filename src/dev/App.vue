@@ -73,6 +73,17 @@ const source = createBulkSource(task, 1, hybrid ? `lak:bulk:dev-hybrid${params.h
 
 const onComplete = () => console.log("complete!");
 
+// Host options, switchable live. `draft` is read when a document opens, so it
+// applies from the next document on.
+const options = ref({
+  showConfidence: true,
+  showRelations: true,
+  showMetadata: true,
+  allowOverlap: true,
+  draft: true,
+  documentLabelMode: "multi" as "multi" | "single",
+});
+
 // The kit only emits these two requests; a real host decides what they open.
 // Here the harness just shows what it was given.
 const lastRequest = ref("");
@@ -84,8 +95,23 @@ const onViewGraph = (r: RelationGraphRequest) => (lastRequest.value = `view-rela
   <div v-if="lastRequest" data-test="last-request" style="padding: 0.4rem 0.8rem; font: 12px monospace; background: #fffbe6; border-bottom: 1px solid #ddd">
     {{ lastRequest }}
   </div>
+  <div data-test="options" style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.4rem 0.8rem; font: 12px system-ui; border-bottom: 1px solid #ddd">
+    <label><input v-model="options.showConfidence" type="checkbox" /> showConfidence</label>
+    <label><input v-model="options.showRelations" type="checkbox" /> showRelations</label>
+    <label><input v-model="options.showMetadata" type="checkbox" /> showMetadata</label>
+    <label><input v-model="options.allowOverlap" type="checkbox" /> allowOverlap</label>
+    <label><input v-model="options.draft" type="checkbox" /> draft</label>
+    <label>
+      documentLabelMode
+      <select v-model="options.documentLabelMode">
+        <option value="multi">multi</option>
+        <option value="single">single</option>
+      </select>
+    </label>
+  </div>
   <AnnotatorQueue
     v-if="source"
+    v-bind="options"
     :source="source"
     :labelset="task.labelset"
     :document-labelset="documentLabelset"

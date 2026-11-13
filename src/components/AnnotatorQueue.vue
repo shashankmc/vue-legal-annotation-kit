@@ -7,7 +7,7 @@ import type {
   RelationGraphRequest,
 } from "../model/source";
 import { documentKey } from "../model/source";
-import type { AnnotationLevel, Assignment, Labelset } from "../types";
+import type { AnnotationLevel, Assignment, DocumentLabelMode, Labelset } from "../types";
 import { useAssignmentQueue } from "../model/useAssignmentQueue";
 import AnnotatorView from "./AnnotatorView.vue";
 
@@ -38,13 +38,31 @@ const props = withDefaults(
      * the task carried them.
      */
     showConfidence?: boolean;
+    /** Relations shown and drawable; see AnnotatorView. */
+    showRelations?: boolean;
+    /** Metadata field shown; see AnnotatorView. */
+    showMetadata?: boolean;
+    /** One document tag at a time (`single`) or any number; see AnnotatorView. */
+    documentLabelMode?: DocumentLabelMode;
+    /** Whether spans may overlap; see AnnotatorView. */
+    allowOverlap?: boolean;
+    /** Crash-recovery drafts in localStorage; see AnnotatorView. */
+    draft?: boolean;
     /**
      * Query param the current position round-trips through, or `false` for a
      * host whose router owns the URL and already means something else by it.
      */
     urlParam?: string | false;
   }>(),
-  { urlParam: "seq", showConfidence: true },
+  {
+    urlParam: "seq",
+    showConfidence: true,
+    showRelations: true,
+    showMetadata: true,
+    documentLabelMode: "multi",
+    allowOverlap: true,
+    draft: true,
+  },
 );
 
 const emit = defineEmits<{
@@ -176,6 +194,11 @@ const onNext = (assignment: Assignment) =>
       @view-document="emit('view-document', $event)"
       @view-relation-graph="emit('view-relation-graph', $event)"
       :show-confidence="showConfidence"
+      :show-relations="showRelations"
+      :show-metadata="showMetadata"
+      :document-label-mode="documentLabelMode"
+      :allow-overlap="allowOverlap"
+      :draft="draft"
       @save="onSave"
       @next="onNext"
       @previous="onPrevious"
