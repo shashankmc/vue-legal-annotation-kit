@@ -213,11 +213,11 @@ const onNext = (assignment: Assignment) =>
   gap: 0.6rem;
   padding: 2rem;
   text-align: center;
-  color: #6b7280;
+  color: var(--lak-muted, #6b7280);
   font-family: system-ui, sans-serif;
 }
 .lak-queue-status--error {
-  color: #dc2626;
+  color: var(--lak-danger, #dc2626);
 }
 .lak-queue-overlay {
   position: absolute;
@@ -226,16 +226,16 @@ const onNext = (assignment: Assignment) =>
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--lak-scrim, rgba(255, 255, 255, 0.7));
   font-family: system-ui, sans-serif;
   font-size: 0.9rem;
-  color: #374151;
+  color: var(--lak-fg-soft, #374151);
 }
 .lak-spinner {
   width: 1.1rem;
   height: 1.1rem;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  border-top-color: #1e4e79;
+  border: 2px solid var(--lak-progress-track, rgba(0, 0, 0, 0.15));
+  border-top-color: var(--lak-accent, #1e4e79);
   border-radius: 50%;
   animation: lak-queue-spin 0.7s linear infinite;
 }

@@ -464,23 +464,15 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .lak-annotator {
-  /* Self-contained theme — no global styles required by consumers. */
-  --lak-accent: #1e4e79;
-  --lak-success: #16a34a;
-  --lak-danger: #dc2626;
-  --lak-border: rgba(0, 0, 0, 0.12);
-  --lak-sidebar-bg: #f1f1f1;
-  --lak-progress-track: #e2e8f0;
-  --lak-muted: #6b7280;
-  --lak-star-empty: #d2cece;
-  --lak-star-on: #f5b301;
-
+  /* Theme: every colour and radius reads a --lak-* variable with its default
+     inline, so a host sets any of them on this element or an ancestor. See
+     README, "Theming". */
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   background: var(--lak-bg, #fff);
-  color: #111;
+  color: var(--lak-fg, #111);
   font-family: system-ui, sans-serif;
 }
 .lak-annotator__error {
@@ -489,10 +481,10 @@ onBeforeUnmount(() => {
   gap: 0.6rem;
   margin: 0 0.75rem 0.5rem;
   padding: 0.5rem 0.7rem;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--lak-danger-border, #fecaca);
+  border-radius: var(--lak-radius, 6px);
+  background: var(--lak-danger-bg, #fef2f2);
+  color: var(--lak-danger-fg, #991b1b);
   font-size: 0.85rem;
 }
 .lak-annotator__error-close {

@@ -135,7 +135,7 @@ const percent = () =>
 .header__doc-name {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -156,13 +156,13 @@ const percent = () =>
 }
 .progress {
   flex: 1;
-  background: var(--lak-progress-track);
+  background: var(--lak-progress-track, #e2e8f0);
   border-radius: 999px;
   overflow: hidden;
 }
 .progress__bar {
-  background: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
   font-size: 0.7rem;
   text-align: center;
   padding: 0.1rem 0;
@@ -174,25 +174,25 @@ const percent = () =>
   font-weight: 600;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
-  color: #fff;
+  color: var(--lak-on-accent, #fff);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .badge--done {
-  background: var(--lak-success);
+  background: var(--lak-success, #16a34a);
 }
 .badge--pending {
-  background: var(--lak-danger);
+  background: var(--lak-danger, #dc2626);
 }
 .badge--level {
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--lak-muted);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.08));
+  color: var(--lak-muted, #6b7280);
 }
 .btn {
   font: inherit;
   font-size: 0.85rem;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--lak-radius, 6px);
   padding: 0.3rem 0.65rem;
   border: 1px solid transparent;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -203,13 +203,13 @@ const percent = () =>
 }
 .btn--outline {
   background: transparent;
-  border-color: var(--lak-accent);
-  color: var(--lak-accent);
+  border-color: var(--lak-accent, #1e4e79);
+  color: var(--lak-accent, #1e4e79);
   text-decoration: none;
 }
 .btn--primary {
-  background: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
 }
 .btn--save {
   display: inline-flex;
@@ -228,12 +228,12 @@ const percent = () =>
   flex-shrink: 0;
 }
 .btn--unsaved {
-  border-color: #d97706;
-  color: #d97706;
+  border-color: var(--lak-warning, #d97706);
+  color: var(--lak-warning, #d97706);
 }
 .btn--saved {
-  border-color: var(--lak-success);
-  color: var(--lak-success);
-  background: color-mix(in srgb, var(--lak-success) 14%, transparent);
+  border-color: var(--lak-success, #16a34a);
+  color: var(--lak-success, #16a34a);
+  background: color-mix(in srgb, var(--lak-success, #16a34a) 14%, transparent);
 }
 </style>

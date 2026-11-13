@@ -121,7 +121,7 @@ const removeLabel = (row: Row, label: string) =>
 .relations {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--lak-border);
+  border-top: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
 }
 .relations__title {
   margin: 0 0 0.5rem;
@@ -136,8 +136,8 @@ const removeLabel = (row: Row, label: string) =>
   gap: 0.5rem;
 }
 .rel {
-  border: 1px solid var(--lak-border);
-  border-radius: 6px;
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px);
   padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
 }
@@ -155,14 +155,14 @@ const removeLabel = (row: Row, label: string) =>
 .rel__swatch {
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 2px;
+  border-radius: var(--lak-radius-sm, 2px);
 }
 .rel__dir {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--lak-border);
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--lak-radius-sm, 4px);
   padding: 0 0.4rem;
 }
 .rel__del {
@@ -185,7 +185,7 @@ const removeLabel = (row: Row, label: string) =>
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  background: rgba(0, 0, 0, 0.07);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.07));
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
   font-size: 0.78rem;
@@ -201,13 +201,13 @@ const removeLabel = (row: Row, label: string) =>
 .rel__add {
   font: inherit;
   font-size: 0.78rem;
-  border: 1px dashed var(--lak-border);
+  border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
 }
 .rel-list__empty {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   font-size: 0.85rem;
 }
 </style>

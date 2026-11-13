@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
 .mark {
   background: color-mix(in srgb, var(--mark-color) 40%, transparent);
   border-bottom: 2px solid var(--mark-color);
-  border-radius: 2px;
+  border-radius: var(--lak-radius-sm, 2px);
   padding: 0.05em 0;
   cursor: pointer;
 }
@@ -300,7 +300,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   text-anchor: middle;
   paint-order: stroke;
-  stroke: #fff;
+  stroke: var(--lak-bg, #fff);
   stroke-width: 3px;
   stroke-linejoin: round;
 }

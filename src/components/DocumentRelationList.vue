@@ -150,7 +150,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 .doc-relations {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--lak-border);
+  border-top: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
 }
 .doc-relations__head {
   display: flex;
@@ -167,17 +167,17 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   font: inherit;
   font-size: 0.72rem;
   padding: 0.1rem 0.5rem;
-  border: 1px solid var(--lak-border);
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
-  background: #fff;
-  color: var(--lak-accent);
+  background: var(--lak-surface, #fff);
+  color: var(--lak-accent, #1e4e79);
   cursor: pointer;
   flex-shrink: 0;
 }
 .doc-relations__graph:hover,
 .rel__read:hover {
-  background: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
 }
 .rel__read {
   margin-left: auto;
@@ -187,7 +187,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 }
 .doc-relations__title--incoming {
   margin-top: 1rem;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -201,13 +201,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   gap: 0.5rem;
 }
 .rel {
-  border: 1px solid var(--lak-border);
-  border-radius: 6px;
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px);
   padding: 0.4rem 0.5rem;
   font-size: 0.85rem;
 }
 .rel--incoming {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.03));
 }
 .rel__ends {
   display: flex;
@@ -215,7 +215,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   gap: 0.5rem;
 }
 .rel__arrow {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   flex-shrink: 0;
 }
 .rel__end {
@@ -226,7 +226,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 }
 .rel--incoming .rel__end {
   font-weight: 400;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .rel__del {
   margin-left: auto;
@@ -249,13 +249,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  background: rgba(0, 0, 0, 0.07);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.07));
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
   font-size: 0.78rem;
 }
 .chip--readonly {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .chip__x {
   background: none;
@@ -268,13 +268,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 .rel__add-label {
   font: inherit;
   font-size: 0.78rem;
-  border: 1px dashed var(--lak-border);
+  border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
 }
 .rel-list__empty {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   font-size: 0.85rem;
 }
 </style>

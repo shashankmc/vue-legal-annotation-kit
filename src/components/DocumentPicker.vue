@@ -142,8 +142,8 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
   font-size: 0.8rem;
   text-align: left;
   padding: 0.3rem 0.4rem;
-  border: 1px dashed var(--lak-border);
-  border-radius: 6px;
+  border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px);
   background: transparent;
   cursor: pointer;
 }
@@ -156,18 +156,18 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
   display: flex;
   flex-direction: column;
   max-height: 16rem;
-  background: #fff;
-  border: 1px solid var(--lak-border);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: var(--lak-surface, #fff);
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px);
+  box-shadow: 0 6px 20px var(--lak-shadow, rgba(0, 0, 0, 0.15));
 }
 .picker__search {
   font: inherit;
   font-size: 0.82rem;
   padding: 0.4rem 0.55rem;
   border: none;
-  border-bottom: 1px solid var(--lak-border);
-  border-radius: 6px 6px 0 0;
+  border-bottom: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px) var(--lak-radius, 6px) 0 0;
 }
 .picker__search:focus {
   outline: none;
@@ -183,12 +183,12 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.4rem;
-  border-radius: 4px;
+  border-radius: var(--lak-radius-sm, 4px);
   font-size: 0.82rem;
   cursor: pointer;
 }
 .picker__option.is-active {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.06));
 }
 .picker__name {
   flex: 1;
@@ -202,19 +202,19 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
   font: inherit;
   font-size: 0.72rem;
   padding: 0.1rem 0.45rem;
-  border: 1px solid var(--lak-border);
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
-  background: #fff;
-  color: var(--lak-accent);
+  background: var(--lak-surface, #fff);
+  color: var(--lak-accent, #1e4e79);
   cursor: pointer;
 }
 .picker__read:hover {
-  background: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
 }
 .picker__empty {
   padding: 0.5rem;
   font-size: 0.8rem;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 </style>

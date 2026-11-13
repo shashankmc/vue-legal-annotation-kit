@@ -221,7 +221,7 @@ const setSelectionMetadata = (value: string) => {
 
 <style scoped>
 .inspector {
-  border-left: 1px solid var(--lak-border);
+  border-left: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   padding: 0.75rem;
   overflow-y: auto;
   display: flex;
@@ -244,24 +244,24 @@ const setSelectionMetadata = (value: string) => {
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.5rem;
-  border: 1px solid var(--lak-border);
-  border-left: 4px solid var(--region-color, var(--lak-border));
-  border-radius: 6px;
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-left: 4px solid var(--region-color, var(--lak-border, rgba(0, 0, 0, 0.12)));
+  border-radius: var(--lak-radius, 6px);
   font-size: 0.85rem;
   cursor: pointer;
 }
 .region__swatch {
   width: 0.8rem;
   height: 0.8rem;
-  border-radius: 3px;
+  border-radius: var(--lak-radius-sm, 3px);
   flex-shrink: 0;
 }
 .region:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.03));
 }
 .region.is-selected {
-  border-color: var(--lak-accent);
-  box-shadow: inset 0 0 0 1px var(--lak-accent);
+  border-color: var(--lak-accent, #1e4e79);
+  box-shadow: inset 0 0 0 1px var(--lak-accent, #1e4e79);
 }
 .region__act {
   background: none;
@@ -279,19 +279,19 @@ const setSelectionMetadata = (value: string) => {
 .linking-hint {
   margin: 0.5rem 0 0;
   padding: 0.4rem 0.5rem;
-  background: color-mix(in srgb, var(--lak-accent) 12%, transparent);
-  border-radius: 6px;
+  background: color-mix(in srgb, var(--lak-accent, #1e4e79) 12%, transparent);
+  border-radius: var(--lak-radius, 6px);
   font-size: 0.8rem;
-  color: var(--lak-accent);
+  color: var(--lak-accent, #1e4e79);
 }
 .region__index {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .region__label {
   font-weight: 600;
 }
 .region__text {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -299,9 +299,9 @@ const setSelectionMetadata = (value: string) => {
 .selection {
   margin-bottom: 0.75rem;
   padding: 0.5rem;
-  border: 1px solid var(--lak-border);
-  border-left: 4px solid var(--region-color, var(--lak-accent));
-  border-radius: 6px;
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-left: 4px solid var(--region-color, var(--lak-accent, #1e4e79));
+  border-radius: var(--lak-radius, 6px);
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -314,7 +314,7 @@ const setSelectionMetadata = (value: string) => {
   min-width: 0;
 }
 .selection__text {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -322,7 +322,7 @@ const setSelectionMetadata = (value: string) => {
 .selection__hint {
   margin: 0 0 0.75rem;
   font-size: 0.8rem;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .metadata {
   display: flex;
@@ -331,18 +331,18 @@ const setSelectionMetadata = (value: string) => {
 }
 .metadata__title {
   font-size: 0.8rem;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .metadata__input {
   font: inherit;
   font-size: 0.85rem;
   resize: vertical;
   padding: 0.35rem 0.45rem;
-  border: 1px solid var(--lak-border);
-  border-radius: 6px;
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--lak-radius, 6px);
 }
 .regions__empty {
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
   font-size: 0.85rem;
 }
 </style>

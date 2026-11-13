@@ -108,7 +108,7 @@ const isDocumentTagged = (label: Label) =>
 .sidebar {
   display: flex;
   flex-direction: column;
-  background: var(--lak-sidebar-bg);
+  background: var(--lak-sidebar-bg, #f1f1f1);
   padding: 0.5rem;
   min-height: 0;
   overflow: hidden;
@@ -125,14 +125,14 @@ const isDocumentTagged = (label: Label) =>
   /* The delimiter between the span labels and the tags under them. */
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--lak-border);
+  border-top: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
 }
 .guidelines-link {
   display: flex;
   align-items: center;
   gap: 0.3rem;
   font-size: 0.8rem;
-  color: var(--lak-accent);
+  color: var(--lak-accent, #1e4e79);
   text-decoration: none;
   margin-bottom: 0.6rem;
 }
@@ -144,13 +144,13 @@ const isDocumentTagged = (label: Label) =>
 }
 .sidebar__divider {
   border: none;
-  border-top: 1px solid var(--lak-border);
+  border-top: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   margin: 0 0 0.6rem;
 }
 .sidebar__section-title {
   margin: 0 0 0.4rem;
   font-size: 0.8rem;
-  color: var(--lak-muted);
+  color: var(--lak-muted, #6b7280);
 }
 .labels {
   list-style: none;
@@ -165,7 +165,7 @@ const isDocumentTagged = (label: Label) =>
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.4rem;
-  border-radius: 6px;
+  border-radius: var(--lak-radius, 6px);
   cursor: pointer;
   font-size: 0.85rem;
 }
@@ -174,20 +174,20 @@ const isDocumentTagged = (label: Label) =>
   cursor: default;
 }
 .label:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.05));
 }
 .label.is-active {
-  background: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
 }
 .label.is-active .label__key {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: var(--lak-on-accent-soft, rgba(255, 255, 255, 0.25));
+  color: var(--lak-on-accent, #fff);
 }
 .label__swatch {
   width: 0.85rem;
   height: 0.85rem;
-  border-radius: 3px;
+  border-radius: var(--lak-radius-sm, 3px);
   flex-shrink: 0;
 }
 .label__name {
@@ -196,9 +196,9 @@ const isDocumentTagged = (label: Label) =>
 .label__key,
 .doc-tag__key {
   font-size: 0.75rem;
-  color: var(--lak-muted);
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 4px;
+  color: var(--lak-muted, #6b7280);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.08));
+  border-radius: var(--lak-radius-sm, 4px);
   padding: 0 0.35rem;
 }
 .doc-tags {
@@ -215,28 +215,28 @@ const isDocumentTagged = (label: Label) =>
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.5rem;
-  border: 1px solid var(--lak-border);
+  border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   cursor: pointer;
   font-size: 0.78rem;
-  background: #fff;
+  background: var(--lak-surface, #fff);
 }
 .doc-tag:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--lak-hover, rgba(0, 0, 0, 0.05));
 }
 .doc-tag.is-tagged {
-  background: var(--lak-accent);
-  border-color: var(--lak-accent);
-  color: #fff;
+  background: var(--lak-accent, #1e4e79);
+  border-color: var(--lak-accent, #1e4e79);
+  color: var(--lak-on-accent, #fff);
 }
 .doc-tag.is-tagged .doc-tag__key {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: var(--lak-on-accent-soft, rgba(255, 255, 255, 0.25));
+  color: var(--lak-on-accent, #fff);
 }
 .doc-tag__swatch {
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 3px;
+  border-radius: var(--lak-radius-sm, 3px);
   flex-shrink: 0;
 }
 .doc-tag__key {
@@ -245,7 +245,7 @@ const isDocumentTagged = (label: Label) =>
 .sidebar__confidence {
   flex-shrink: 0;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--lak-border);
+  border-top: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   display: flex;
   flex-direction: column;
   gap: 0.6rem;

@@ -55,10 +55,10 @@ const set = (value: number) => {
   padding: 0;
   font-size: 1.4rem;
   line-height: 1;
-  color: var(--lak-star-empty);
+  color: var(--lak-star-empty, #d2cece);
 }
 .rating__star.is-on {
-  color: var(--lak-star-on);
+  color: var(--lak-star-on, #f5b301);
 }
 .rating.disabled .rating__star {
   cursor: default;
