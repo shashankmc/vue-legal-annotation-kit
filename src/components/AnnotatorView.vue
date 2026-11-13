@@ -411,9 +411,13 @@ onBeforeUnmount(() => {
     />
 
     <p v-if="saveError" class="lak-annotator__error" role="alert">
-      <span>
+      <span v-if="keepsDraft">
         Your changes could not be saved: {{ saveError }} They are kept on this
         device, so you can try again or reload without losing them.
+      </span>
+      <span v-else>
+        Your changes could not be saved: {{ saveError }} They are still here, so
+        you can try again; reloading will lose them.
       </span>
       <button type="button" class="lak-annotator__error-close" aria-label="Dismiss" @click="saveError = null">
         ×

@@ -147,3 +147,25 @@ describe("AnnotatorView host options", () => {
     expect(set).not.toHaveBeenCalled();
   });
 });
+
+describe("a failed save", () => {
+  const failingSave = () => Promise.reject(new Error("Server down."));
+  const failSave = async (props: Record<string, unknown>) => {
+    const w = mountView({ onSave: failingSave, ...props }, "document");
+    await w.findAll(".doc-tag")[0].trigger("click");
+    await w.findComponent({ name: "AnnotatorHeader" }).vm.$emit("save");
+    await vi.waitFor(() => expect(w.find(".lak-annotator__error").exists()).toBe(true));
+    return w.find(".lak-annotator__error").text();
+  };
+
+  it("says the work is kept on this device when drafts are on", async () => {
+    expect(await failSave({})).toContain("kept on this device");
+  });
+
+  it("does not promise a copy on the device when drafts are off", async () => {
+    const message = await failSave({ draft: false });
+    expect(message).toContain("Server down.");
+    expect(message).not.toContain("device");
+    expect(message).toContain("reloading will lose them");
+  });
+});
