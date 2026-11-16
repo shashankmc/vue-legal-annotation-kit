@@ -628,7 +628,7 @@ onBeforeUnmount(() => {
   border-radius: var(--lak-radius, 6px);
   background: var(--lak-danger-bg, #fef2f2);
   color: var(--lak-danger-fg, #991b1b);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .lak-annotator__notice {
   display: flex;
@@ -640,7 +640,7 @@ onBeforeUnmount(() => {
   border-radius: var(--lak-radius, 6px);
   background: var(--lak-warning-bg, #fffbeb);
   color: var(--lak-warning-fg, #92400e);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .lak-annotator__error-close {
   margin-left: auto;

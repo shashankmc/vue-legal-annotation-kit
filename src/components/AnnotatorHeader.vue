@@ -140,7 +140,7 @@ const percent = () =>
   min-width: 0;
 }
 .header__doc-name {
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
   font-weight: 600;
   color: var(--lak-muted, #6b7280);
   white-space: nowrap;
@@ -158,7 +158,7 @@ const percent = () =>
 }
 .header__count {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   white-space: nowrap;
 }
 .progress {
@@ -170,14 +170,14 @@ const percent = () =>
 .progress__bar {
   background: var(--lak-accent, #1e4e79);
   color: var(--lak-on-accent, #fff);
-  font-size: 0.7rem;
+  font-size: var(--lak-font-size-2xs, 0.7rem);
   text-align: center;
   padding: 0.1rem 0;
   min-width: 2rem;
 }
 .badge {
   text-transform: capitalize;
-  font-size: 0.72rem;
+  font-size: var(--lak-font-size-2xs, 0.72rem);
   font-weight: 600;
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
@@ -197,7 +197,7 @@ const percent = () =>
 }
 .btn {
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   cursor: pointer;
   border-radius: var(--lak-radius, 6px);
   padding: 0.3rem 0.65rem;

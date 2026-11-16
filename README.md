@@ -463,6 +463,20 @@ next to it. Set any of them on `.lak-annotator` or on any element above it:
 Pills (`999px`) and the spinner (`50%`) keep their shape. Label colours come from
 the labelset, not from variables.
 
+Text sizes read five steps. Each use keeps its own default, so a host that sets
+none sees no change; a host that sets one step sets every use of it.
+
+| Variable | Defaults | Used for |
+|---|---|---|
+| `--lak-font-size-2xs` | `0.7rem`–`0.75rem`, `11px` | Badges, hotkey hints, relation labels on the document |
+| `--lak-font-size-xs` | `0.78rem`–`0.82rem` | Counts, metadata, small buttons |
+| `--lak-font-size-sm` | `0.85rem`–`0.88rem` | Body text in the panels, buttons |
+| `--lak-font-size-md` | `0.9rem` | Panel and section titles |
+| `--lak-font-size-base` | `1rem` | The confirm dialog's title |
+| `--lak-label-case` / `--lak-label-tracking` | `uppercase` / `0.03em` | Small section labels |
+
+The error banner's close "×" and the confidence stars are icons and keep their size.
+
 ---
 
 ## 6. Distribution

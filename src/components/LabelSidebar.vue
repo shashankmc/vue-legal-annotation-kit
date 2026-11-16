@@ -132,7 +132,7 @@ const isDocumentTagged = (label: Label) =>
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-accent, #1e4e79);
   text-decoration: none;
   margin-bottom: 0.6rem;
@@ -141,7 +141,7 @@ const isDocumentTagged = (label: Label) =>
   text-decoration: underline;
 }
 .guidelines-link__icon {
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .sidebar__divider {
   border: none;
@@ -150,7 +150,7 @@ const isDocumentTagged = (label: Label) =>
 }
 .sidebar__section-title {
   margin: 0 0 0.4rem;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-muted, #6b7280);
 }
 .labels {
@@ -168,7 +168,7 @@ const isDocumentTagged = (label: Label) =>
   padding: 0.3rem 0.4rem;
   border-radius: var(--lak-radius, 6px);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .label.is-readonly,
 .doc-tag.is-readonly {
@@ -196,7 +196,7 @@ const isDocumentTagged = (label: Label) =>
 }
 .label__key,
 .doc-tag__key {
-  font-size: 0.75rem;
+  font-size: var(--lak-font-size-2xs, 0.75rem);
   color: var(--lak-muted, #6b7280);
   background: var(--lak-hover, rgba(0, 0, 0, 0.08));
   border-radius: var(--lak-radius-sm, 4px);
@@ -219,7 +219,7 @@ const isDocumentTagged = (label: Label) =>
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
   background: var(--lak-surface, #fff);
 }
 .doc-tag:hover {
@@ -241,7 +241,7 @@ const isDocumentTagged = (label: Label) =>
   flex-shrink: 0;
 }
 .doc-tag__key {
-  font-size: 0.7rem;
+  font-size: var(--lak-font-size-2xs, 0.7rem);
 }
 .sidebar__confidence {
   flex-shrink: 0;

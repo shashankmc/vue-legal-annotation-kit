@@ -111,7 +111,7 @@ const onCorrect = (p: Proposal, event: Event) => {
 }
 .proposals__title {
   margin: 0 0 0.6rem;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
 }
 .proposals__list {
   list-style: none;
@@ -127,7 +127,7 @@ const onCorrect = (p: Proposal, event: Event) => {
   border-left: 4px dashed var(--proposal-color, var(--lak-border, rgba(0, 0, 0, 0.12)));
   border-radius: var(--lak-radius, 6px);
   background: var(--lak-surface, #fff);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   outline: none;
 }
 .proposal:focus-visible,
@@ -154,7 +154,7 @@ const onCorrect = (p: Proposal, event: Event) => {
   border: 1px dashed var(--lak-muted, #6b7280);
   border-radius: 999px;
   color: var(--lak-muted, #6b7280);
-  font-size: 0.7rem;
+  font-size: var(--lak-font-size-2xs, 0.7rem);
 }
 .proposal__text,
 .proposal__rationale {
@@ -173,7 +173,7 @@ const onCorrect = (p: Proposal, event: Event) => {
 .proposal__source {
   margin: 0.25rem 0 0;
   color: var(--lak-muted, #6b7280);
-  font-size: 0.72rem;
+  font-size: var(--lak-font-size-2xs, 0.72rem);
 }
 .proposal__actions {
   display: flex;
@@ -189,7 +189,7 @@ const onCorrect = (p: Proposal, event: Event) => {
   background: var(--lak-surface, #fff);
   color: var(--lak-fg-soft, #374151);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   cursor: pointer;
 }
 .proposal__btn--accept {

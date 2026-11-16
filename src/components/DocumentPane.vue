@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .rel-label {
-  font-size: 11px;
+  font-size: var(--lak-font-size-2xs, 11px);
   font-weight: 600;
   text-anchor: middle;
   paint-order: stroke;

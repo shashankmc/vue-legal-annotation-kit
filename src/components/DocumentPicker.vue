@@ -139,7 +139,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 .picker__toggle {
   width: 100%;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   text-align: left;
   padding: 0.3rem 0.4rem;
   border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
@@ -163,7 +163,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 }
 .picker__search {
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--lak-font-size-xs, 0.82rem);
   padding: 0.4rem 0.55rem;
   border: none;
   border-bottom: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
@@ -184,7 +184,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
   gap: 0.4rem;
   padding: 0.3rem 0.4rem;
   border-radius: var(--lak-radius-sm, 4px);
-  font-size: 0.82rem;
+  font-size: var(--lak-font-size-xs, 0.82rem);
   cursor: pointer;
 }
 .picker__option.is-active {
@@ -200,7 +200,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 .picker__read {
   flex-shrink: 0;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: var(--lak-font-size-2xs, 0.72rem);
   padding: 0.1rem 0.45rem;
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
@@ -214,7 +214,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside));
 }
 .picker__empty {
   padding: 0.5rem;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-muted, #6b7280);
 }
 </style>

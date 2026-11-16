@@ -57,12 +57,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 }
 .confirm-modal__title {
   margin: 0 0 0.5rem;
-  font-size: 1rem;
+  font-size: var(--lak-font-size-base, 1rem);
   color: var(--lak-fg, #111);
 }
 .confirm-modal__message {
   margin: 0 0 1.25rem;
-  font-size: 0.88rem;
+  font-size: var(--lak-font-size-sm, 0.88rem);
   color: var(--lak-fg-soft, #4b5563);
   line-height: 1.4;
   white-space: pre-line;
@@ -74,7 +74,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 }
 .confirm-modal__btn {
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   cursor: pointer;
   border-radius: var(--lak-radius, 6px);
   padding: 0.4rem 0.9rem;

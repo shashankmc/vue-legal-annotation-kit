@@ -125,7 +125,7 @@ const removeLabel = (row: Row, label: string) =>
 }
 .relations__title {
   margin: 0 0 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
 }
 .rel-list {
   list-style: none;
@@ -139,7 +139,7 @@ const removeLabel = (row: Row, label: string) =>
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: var(--lak-radius, 6px);
   padding: 0.4rem 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .rel__ends {
   display: flex;
@@ -188,19 +188,19 @@ const removeLabel = (row: Row, label: string) =>
   background: var(--lak-hover, rgba(0, 0, 0, 0.07));
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
 }
 .chip__x {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
   line-height: 1;
   padding: 0;
 }
 .rel__add {
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
   border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   background: transparent;
@@ -208,6 +208,6 @@ const removeLabel = (row: Row, label: string) =>
 }
 .rel-list__empty {
   color: var(--lak-muted, #6b7280);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 </style>

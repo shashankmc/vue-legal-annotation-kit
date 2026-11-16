@@ -41,7 +41,7 @@ const set = (value: number) => {
 .rating__label {
   display: block;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   margin-bottom: 0.15rem;
 }
 .rating__stars {

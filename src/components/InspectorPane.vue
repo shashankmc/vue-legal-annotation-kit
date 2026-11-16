@@ -244,7 +244,7 @@ const setSelectionMetadata = (value: string) => {
 }
 .inspector__title {
   margin: 0 0 0.6rem;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
 }
 /* A heading straight after a list (relations hidden) still gets its gap. */
 .regions + .inspector__title,
@@ -267,7 +267,7 @@ const setSelectionMetadata = (value: string) => {
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-left: 4px solid var(--region-color, var(--lak-border, rgba(0, 0, 0, 0.12)));
   border-radius: var(--lak-radius, 6px);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   cursor: pointer;
 }
 .region__swatch {
@@ -287,7 +287,7 @@ const setSelectionMetadata = (value: string) => {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
   opacity: 0.6;
 }
 .region__act:first-of-type {
@@ -301,7 +301,7 @@ const setSelectionMetadata = (value: string) => {
   padding: 0.4rem 0.5rem;
   background: color-mix(in srgb, var(--lak-accent, #1e4e79) 12%, transparent);
   border-radius: var(--lak-radius, 6px);
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-accent, #1e4e79);
 }
 .region__index {
@@ -330,7 +330,7 @@ const setSelectionMetadata = (value: string) => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   min-width: 0;
 }
 .selection__text {
@@ -341,7 +341,7 @@ const setSelectionMetadata = (value: string) => {
 }
 .selection__hint {
   margin: 0 0 0.75rem;
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-muted, #6b7280);
 }
 .metadata {
@@ -350,12 +350,12 @@ const setSelectionMetadata = (value: string) => {
   gap: 0.3rem;
 }
 .metadata__title {
-  font-size: 0.8rem;
+  font-size: var(--lak-font-size-xs, 0.8rem);
   color: var(--lak-muted, #6b7280);
 }
 .metadata__input {
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
   resize: vertical;
   padding: 0.35rem 0.45rem;
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
@@ -363,6 +363,6 @@ const setSelectionMetadata = (value: string) => {
 }
 .regions__empty {
   color: var(--lak-muted, #6b7280);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 </style>

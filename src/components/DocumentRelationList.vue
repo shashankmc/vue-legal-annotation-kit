@@ -160,12 +160,12 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 }
 .doc-relations__title {
   margin: 0 0 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
 }
 .doc-relations__graph,
 .rel__read {
   font: inherit;
-  font-size: 0.72rem;
+  font-size: var(--lak-font-size-2xs, 0.72rem);
   padding: 0.1rem 0.5rem;
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
@@ -188,9 +188,9 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 .doc-relations__title--incoming {
   margin-top: 1rem;
   color: var(--lak-muted, #6b7280);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: var(--lak-font-size-xs, 0.8rem);
+  text-transform: var(--lak-label-case, uppercase);
+  letter-spacing: var(--lak-label-tracking, 0.03em);
 }
 .rel-list {
   list-style: none;
@@ -204,7 +204,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   border: 1px solid var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: var(--lak-radius, 6px);
   padding: 0.4rem 0.5rem;
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 .rel--incoming {
   background: var(--lak-hover, rgba(0, 0, 0, 0.03));
@@ -252,7 +252,7 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   background: var(--lak-hover, rgba(0, 0, 0, 0.07));
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
 }
 .chip--readonly {
   color: var(--lak-muted, #6b7280);
@@ -261,13 +261,13 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
   line-height: 1;
   padding: 0;
 }
 .rel__add-label {
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--lak-font-size-xs, 0.78rem);
   border: 1px dashed var(--lak-border, rgba(0, 0, 0, 0.12));
   border-radius: 999px;
   background: transparent;
@@ -275,6 +275,6 @@ const removeLabel = (rel: DocumentRelation, label: string) =>
 }
 .rel-list__empty {
   color: var(--lak-muted, #6b7280);
-  font-size: 0.85rem;
+  font-size: var(--lak-font-size-sm, 0.85rem);
 }
 </style>

@@ -251,7 +251,7 @@ const onNext = (assignment: Assignment) =>
   gap: 0.6rem;
   background: var(--lak-scrim, rgba(255, 255, 255, 0.7));
   font-family: system-ui, sans-serif;
-  font-size: 0.9rem;
+  font-size: var(--lak-font-size-md, 0.9rem);
   color: var(--lak-fg-soft, #374151);
 }
 .lak-spinner {
